@@ -4,21 +4,26 @@ const customFetch = async (endpoint, options = {}) => {
   const baseURL = import.meta.env.VITE_BACKEND_URL || '';
   const url = `${baseURL}${endpoint}`;
 
-  const token = 
-    getToken('superadminUser') || 
-    getToken('adminUser') || 
-    getToken('artistUser');
+  // 🛡️ 1. Identify public authentication routes (login, signin, etc.)
+  const isAuthRoute = endpoint.includes('/api/auth/');
+
+  // 🛡️ 2. Only look for a token if we are NOT on a login route
+  const token = !isAuthRoute 
+    ? (getToken('superadminUser') || getToken('adminUser') || getToken('artistUser'))
+    : null;
 
   const headers = {
     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
     ...options.headers,
   };
 
-  // 🚀 THE FIX: Only force JSON if we are NOT sending FormData (files)
-  if (options.body && !(options.body instanceof FormData) && !headers['Content-Type']) {
-    headers['Content-Type'] = 'application/json';
-  } else if (!options.body && !headers['Content-Type']) {
-    // Also default to JSON for GET requests just in case
+  // 🚀 3. Bulletproof File handling
+  if (options.body instanceof FormData) {
+    // If it's a file upload, completely remove Content-Type.
+    // The browser must set this automatically with the correct WebKit boundary.
+    delete headers['Content-Type'];
+  } else if (!headers['Content-Type']) {
+    // Default to JSON for standard REST payloads
     headers['Content-Type'] = 'application/json';
   }
 
