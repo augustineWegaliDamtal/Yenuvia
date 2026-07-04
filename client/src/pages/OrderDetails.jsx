@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { MapPin, Phone, User, Package, Truck, Map, ShieldCheck, ArrowLeft, CheckCircle, AlertTriangle, Store } from "lucide-react";
+import customFetch from "../util/customFetch.js";
 
 const OrderDetails = () => {
   const { id } = useParams();
@@ -15,7 +16,7 @@ const OrderDetails = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const res = await fetch(`/api/order/${id}`, {
+        const res = await customFetch(`/api/order/${id}`, {
           headers: { Authorization: `Bearer ${currentUserArtist.token}` },
         });
         const data = await res.json();
@@ -38,7 +39,7 @@ const OrderDetails = () => {
   const handleUpdateStatus = async (newStatus) => {
     setUpdating(true);
     try {
-      const res = await fetch(`/api/order/status/${id}`, { 
+      const res = await customFetch(`/api/order/status/${id}`, { 
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -67,7 +68,7 @@ const OrderDetails = () => {
 
     setUpdating(true);
     try {
-      const res = await fetch(`/api/order/${id}/confirm-delivery`, {
+      const res = await customFetch(`/api/order/${id}/confirm-delivery`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -95,7 +96,7 @@ const OrderDetails = () => {
 
     setUpdating(true);
     try {
-      const res = await fetch(`/api/order/${id}/dispute`, {
+      const res = await customFetch(`/api/order/${id}/dispute`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

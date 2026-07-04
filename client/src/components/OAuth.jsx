@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 // 🔥 CRITICAL: Import saveToken so Google users stay logged in!
 import { saveToken } from '../../../api/utils/tokenManager.js';
+import customFetch from '../util/customFetch.js';
 
 const OAuth = () => {
   const dispatch = useDispatch();
@@ -24,7 +25,7 @@ const OAuth = () => {
         role: "artist" // Enforce role consistency
       };
 
-      const res = await fetch('/api/auth/google', {
+      const res = await customFetch('/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userInfo),

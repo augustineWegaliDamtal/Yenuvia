@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import FeedCard from "../components/FeedCard";
 import { Loader2, Briefcase, Grid, List, ArrowLeft } from "lucide-react"; // 🔥 Added ArrowLeft
+import customFetch from "../util/customFetch";
 
 const Professional = () => {
   const [posts, setPosts] = useState([]);
@@ -14,7 +15,7 @@ const Professional = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/work/professionals?type=${filter}`);
+      const res = await customFetch(`/api/work/professionals?type=${filter}`);
       const data = await res.json();
       if (data.success) setPosts(data.posts);
     } catch (err) {
@@ -62,7 +63,7 @@ const Professional = () => {
 
   const handleLike = async (id) => {
     try {
-      const res = await fetch(`/api/work/${id}/like`, {
+      const res = await customFetch(`/api/work/${id}/like`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${currentUserArtist?.token}` },
       });

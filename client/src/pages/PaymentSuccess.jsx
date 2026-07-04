@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti"; 
 import { Trophy, Home, CheckCircle2, Sparkles, Loader2 } from "lucide-react";
+import customFetch from "../util/customFetch.js";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -25,7 +26,7 @@ const PaymentSuccess = () => {
       try {
         // 🚀 THE CRITICAL FIX: Added credentials: 'include'
         // This sends your cookies/token so the backend doesn't give a 404/401 error
-        const res = await fetch(`/api/order/verify?reference=${reference}`, {
+        const res = await customFetch(`/api/order/verify?reference=${reference}`, {
           method: 'GET',
           credentials: 'include', 
         });

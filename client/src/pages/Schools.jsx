@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import SupportButton from "../components/SupportButton";
 import { useSocket } from '../context/SocketContext'; // 🔥 Brought in the Global Socket
+import customFetch from "../util/customFetch.js";
 
 // --- 🏆 THE UPGRADED VICTORY CARD ---
 const VictoryCard = ({ match }) => {
@@ -210,7 +211,7 @@ const Schools = () => {
       // Only show the big loading spinner if we have absolutely nothing to show yet
       if (liveMatches.length === 0 && completedMatches.length === 0) setLoading(true);
       
-      const res = await fetch(`/api/matches?league=${activeLeague}&status=LIVE,COMPLETED`);
+      const res = await customFetch(`/api/matches?league=${activeLeague}&status=LIVE,COMPLETED`);
       const data = await res.json();
       
       if (data.success) {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { Wallet as WalletIcon, ArrowUpRight, History, CheckCircle2, Clock, XCircle, Loader2, Landmark } from "lucide-react";
+import customFetch from "../util/customFetch";
 
 const Wallet = () => {
   const activeUser = useSelector((state) => state.user?.currentUser || state.artist?.currentUserArtist);
@@ -19,7 +20,7 @@ const Wallet = () => {
   const fetchWallet = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/users/wallet", {
+      const res = await customFetch("/api/users/wallet", {
         headers: { Authorization: `Bearer ${activeUser?.token}` }
       });
       const data = await res.json();

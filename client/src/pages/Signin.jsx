@@ -6,6 +6,7 @@ import OAuth from '../components/OAuth.jsx';
 import { saveToken } from '../../../api/utils/tokenManager.js';
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ShieldCheck, AlertTriangle, ArrowRight, Loader2 } from "lucide-react";
+import customFetch from '../util/customFetch.js';
 
 const Signin = () => {
   const [formData, setFormData] = useState({
@@ -30,7 +31,7 @@ const Signin = () => {
     e.preventDefault();
     try {
       dispatch(artistSigninStart());
-      const res = await fetch('/api/auth/signin', {
+      const res = await customFetch('/api/auth/signin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

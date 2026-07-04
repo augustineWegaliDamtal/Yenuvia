@@ -8,6 +8,7 @@ import VerifiedBadge from "./VerifiedBadge";
 import CommentPanel from "./CommentPanel";
 import { toggleGlobalMute } from "../redux/users/settingsSlice";
 import GhanaCardModal from "./GhanaCardModal"; 
+import customFetch from "../util/customFetch.js";
 
 const FeedCard = ({ post, handleLike, handleShare, leaderboard }) => {
   const [showComments, setShowComments] = useState(false);
@@ -139,7 +140,7 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard }) => {
     dispatch(SET_LIVE_ALERT({ type: "success", title: "Downloading...", message: "Fetching media..." }));
 
     try {
-      const response = await fetch(currentMedia.url);
+      const response = await customFetch(currentMedia.url);
       if (!response.ok) throw new Error("Failed to fetch file");
       
       const blob = await response.blob();
@@ -214,7 +215,7 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard }) => {
     setLocalShareCount((prev) => prev + 1);
 
     if (handleShare) handleShare(post); 
-    fetch(`/api/work/${post._id}/share`, { method: "PUT" }).catch(() => {}); 
+    customFetch(`/api/work/${post._id}/share`, { method: "PUT" }).catch(() => {}); 
   };
 
   // 🔥 NEW: Profile click handler protecting guests from visiting profile pages

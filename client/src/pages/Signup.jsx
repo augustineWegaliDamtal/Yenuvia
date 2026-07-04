@@ -6,6 +6,7 @@ import { saveToken } from '../../../api/utils/tokenManager';
 import { artistSigninSuccess } from '../redux/users/artistSlice';
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Mail, Lock, Eye, EyeOff, Sparkles, AlertTriangle, ArrowRight, Loader2 } from "lucide-react";
+import customFetch from '../util/customFetch.js';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -30,7 +31,9 @@ const Signup = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      const res = await fetch('/api/auth/signup', {
+      
+      // ✅ FIX: Points explicitly to your backend server URL hosted on Render
+      const res = await customFetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -70,7 +73,6 @@ const Signup = () => {
           initial={{ opacity: 0, y: 40, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          // Removed 'my-auto' because the parent min-h-full container now handles vertical centering perfectly
           className="w-full max-w-sm bg-zinc-950/70 backdrop-blur-3xl p-8 rounded-[2.5rem] border border-white/5 shadow-[0_25px_80px_-15px_rgba(0,0,0,1)] relative z-10"
         >
           {/* Cinematic light edge */}
@@ -108,7 +110,7 @@ const Signup = () => {
                 <Mail size={18} />
               </div>
               <input
-                type="email"
+                type="type"
                 id="email"
                 placeholder="Email"
                 value={formData.email}

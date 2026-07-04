@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { PaystackButton } from "react-paystack"; // 🔥 FIX 1: Import the stable component
 import { Loader2, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { useSelector } from "react-redux";
+import customFetch from "../util/customFetch";
 
 const SupportButton = ({ matchId, contenderId, schoolName, onComplete, theme = "yellow" }) => {
   const { currentUserArtist } = useSelector((state) => state.artist) || {}; 
@@ -16,7 +17,7 @@ const SupportButton = ({ matchId, contenderId, schoolName, onComplete, theme = "
     setIsVerifying(true);
     
     try {
-      const res = await fetch(`/api/matches/${matchId}/support`, {
+      const res = await customFetch(`/api/matches/${matchId}/support`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

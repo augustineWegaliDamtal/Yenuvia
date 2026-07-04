@@ -5,6 +5,7 @@ import BottomNav from "../components/BottomNav";
 import { CLEAR_UNREAD_MESSAGES } from "../redux/users/notificationsSlice";
 import { Send, Paperclip, Loader2, X, Film } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import customFetch from "../util/customFetch.js";
 
 const Inbox = () => {
   const { currentUserArtist } = useSelector((state) => state.artist);
@@ -62,7 +63,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const res = await fetch("/api/messages", {
+        const res = await customFetch("/api/messages", {
           headers: { Authorization: `Bearer ${currentUserArtist?.token}` },
         });
         const data = await res.json();
@@ -149,7 +150,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
       fd.append("content", contentToSubmit);
       if (fileToSubmit) fd.append("media", fileToSubmit);
 
-      const res = await fetch("/api/messages", {
+      const res = await customFetch("/api/messages", {
         method: "POST",
         headers: { Authorization: `Bearer ${currentUserArtist.token}` },
         body: fd,

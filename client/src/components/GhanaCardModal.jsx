@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { X, ShieldCheck, Loader2 } from "lucide-react";
 import { SET_LIVE_ALERT } from "../redux/users/notificationsSlice";
 import { artistUpdateUserSuccess } from "../redux/users/artistSlice";
+import customFetch from "../util/customFetch.js";
 
 
 const GhanaCardModal = ({ onClose, onSuccess }) => {
@@ -24,7 +25,7 @@ const GhanaCardModal = ({ onClose, onSuccess }) => {
     setIsVerifying(true);
 
     try {
-      const res = await fetch("/api/user/verify-ghana-card", {
+      const res = await customFetch("/api/user/verify-ghana-card", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

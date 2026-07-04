@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { Loader2, Trash2, Film, Image as ImageIcon, Store } from "lucide-react";
 import { useSocket } from "../context/SocketContext";
+import customFetch from "../util/customFetch.js";
 
 const WorkShow = ({ userId, isOwner, activeTab }) => {
   const activeUser = useSelector((state) => state.user?.currentUser || state.artist?.currentUserArtist);
@@ -17,7 +18,7 @@ const WorkShow = ({ userId, isOwner, activeTab }) => {
     if (!isSilent) setLoading(true);
     try {
       const queryTab = (activeTab === "showroom" || activeTab === "shop") ? "shop" : "portfolio";
-      const res = await fetch(`/api/work/user/${userId}?tab=${queryTab}`, {
+      const res = await customFetch(`/api/work/user/${userId}?tab=${queryTab}`, {
         headers: { Authorization: `Bearer ${activeUser?.token}` }
       });
       const data = await res.json();
@@ -72,7 +73,7 @@ const WorkShow = ({ userId, isOwner, activeTab }) => {
     if (!window.confirm("🚨 Are you sure you want to delete this piece? This cannot be undone.")) return;
     
     try {
-      const res = await fetch(`/api/work/${workId}`, {
+      const res = await customFetch(`/api/work/${workId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${activeUser?.token}` }
       });

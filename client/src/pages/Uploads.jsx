@@ -7,6 +7,7 @@ import { SET_LIVE_ALERT } from "../redux/users/notificationsSlice";
 
 // 🔥 1. IMPORT THE HOOK FROM YOUR NEW CONTEXT
 import { useUpload } from "../context/UploadContext";
+import customFetch from "../util/customFetch";
 
 // 🔥 EXPANDED GHANA SCHOOLS DATABASE
 const GHANA_SCHOOLS = [
@@ -32,7 +33,7 @@ const DerbySubmissionSelector = ({ selectedMatchId, setSelectedMatchId }) => {
   useEffect(() => {
     const fetchDirectives = async () => {
       try {
-        const res = await fetch("/api/matches?status=UPCOMING,LIVE");
+        const res = await customFetch("/api/matches?status=UPCOMING,LIVE");
         const data = await res.json();
         if (data.success) setActiveDirectives(data.matches || []);
       } catch (error) {

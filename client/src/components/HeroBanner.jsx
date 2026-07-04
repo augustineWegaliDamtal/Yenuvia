@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Zap, Swords, Timer, Loader2, Lock, ArrowRight } from "lucide-react";
 import { Link, useNavigate } from 'react-router-dom';
+import customFetch from "../util/customFetch.js";
 
 const HeroBanner = ({ setActiveTab, liveUpdateTrigger }) => {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ const HeroBanner = ({ setActiveTab, liveUpdateTrigger }) => {
     const fetchHero = async () => {
       try {
         const cacheBuster = Date.now();
-        const res = await fetch(`/api/matches/hero-banner?_t=${cacheBuster}`);
+        const res = await customFetch(`/api/matches/hero-banner?_t=${cacheBuster}`);
         
         const json = await res.json();
         if (json.success) setBannerState({ type: json.type, data: json.data });

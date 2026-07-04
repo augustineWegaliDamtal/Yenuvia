@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Trash2, Loader2, MessageCircle, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import customFetch from "../util/customFetch.js";
 
 // ✅ ADDED onCommentUpdate PROP
 const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
@@ -21,7 +22,7 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/api/work/${post._id}/comment`, {
+      const res = await customFetch(`/api/work/${post._id}/comment`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -50,7 +51,7 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
   // 🗑️ DELETE A COMMENT
   const handleDelete = async (commentId) => {
     try {
-      const res = await fetch(`/api/work/${post._id}/comment/${commentId}`, {
+      const res = await customFetch(`/api/work/${post._id}/comment/${commentId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${activeUser?.token}`,

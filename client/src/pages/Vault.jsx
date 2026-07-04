@@ -5,6 +5,7 @@ import {
   ShieldCheck, ArrowUpRight, 
   Clock, CheckCircle2, XCircle, Loader2
 } from "lucide-react";
+import customFetch from "../util/customFetch.js";
 
 const Vault = () => {
   const activeUser = useSelector((state) => state.user?.currentUser || state.artist?.currentUserArtist);
@@ -16,7 +17,7 @@ const Vault = () => {
   useEffect(() => {
     const fetchLedger = async () => {
       try {
-        const res = await fetch("/api/stakes/my-ledger", {
+        const res = await customFetch("/api/stakes/my-ledger", {
           headers: { Authorization: `Bearer ${activeUser?.token}` }
         });
         const data = await res.json();

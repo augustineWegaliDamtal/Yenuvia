@@ -1,5 +1,6 @@
 // components/VerifyAccountButton.jsx
 import React, { useState } from "react";
+import customFetch from "../util/customFetch.js";
 
 const VerifyAccountButton = ({ verified }) => {
   const [loading, setLoading] = useState(false);
@@ -7,7 +8,7 @@ const VerifyAccountButton = ({ verified }) => {
   const handleVerify = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/payments/verify/initiate", {
+      const response = await customFetch("/api/payments/verify/initiate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

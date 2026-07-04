@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, MapPin, Phone, User, Navigation, CreditCard, Loader2 } from "lucide-react";
 import { useSelector } from "react-redux";
+import customFetch from "../util/customFetch.js";
 
 const CheckoutModal = ({ isOpen, onClose, work }) => {
   const { currentUserArtist } = useSelector((state) => state.artist);
@@ -23,7 +24,7 @@ const CheckoutModal = ({ isOpen, onClose, work }) => {
     setError("");
 
     try {
-      const res = await fetch("/api/order/checkout", {
+      const res = await customFetch("/api/order/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

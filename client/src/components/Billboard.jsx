@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react"; 
 import HeroBanner from "./HeroBanner"; 
 import { useSocket } from '../context/SocketContext';
+import customFetch from "../util/customFetch.js";
 
 // 🔥 THE ENGINE: Downloads media completely in the background
 const backgroundPreload = (url, callback) => {
@@ -41,7 +42,7 @@ const Billboard = ({ liveUpdateTrigger }) => {
     let isMounted = true;
     const syncBillboard = async () => {
       try {
-       const postsRes = await fetch(`/api/work/search?status=billboard&_t=${Date.now()}`);
+       const postsRes = await customFetch(`/api/work/search?status=billboard&_t=${Date.now()}`);
         const postsData = await postsRes.json();
         if (isMounted && postsData.success) {
           const works = postsData.works || [];
@@ -74,7 +75,7 @@ const Billboard = ({ liveUpdateTrigger }) => {
       const fetchFreshBillboard = async () => {
         try {
           const cacheBuster = Date.now();
-          const postsRes = await fetch(`/api/work/search?status=billboard&_t=${cacheBuster}`);
+          const postsRes = await customFetch(`/api/work/search?status=billboard&_t=${cacheBuster}`);
           const postsData = await postsRes.json();
           if (postsData.success) {
             const top6 = (postsData.works || []).slice(0, 6);

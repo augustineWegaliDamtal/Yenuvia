@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Bell, Heart, MessageSquare, Gift, UserPlus, Package, Info, CheckCheck, Truck } from "lucide-react";
+import customFetch from "../util/customFetch.js";
 
 const NotificationBell = ({ socket }) => {
   // 🟢 UPDATED: Now points perfectly to your artistSlice!
@@ -17,7 +18,7 @@ const NotificationBell = ({ socket }) => {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const res = await fetch("/api/notifications", {
+        const res = await customFetch("/api/notifications", {
           // 🟢 UPDATED: Using currentUserArtist
           headers: { Authorization: `Bearer ${currentUserArtist?.token}` }, 
         });
@@ -68,7 +69,7 @@ const NotificationBell = ({ socket }) => {
       );
 
       // Tell backend
-      await fetch(`/api/notifications/${notif._id}/read`, {
+      await customFetch(`/api/notifications/${notif._id}/read`, {
         method: "PUT",
         // 🟢 UPDATED: Using currentUserArtist
         headers: { Authorization: `Bearer ${currentUserArtist?.token}` }, 
@@ -90,7 +91,7 @@ const NotificationBell = ({ socket }) => {
     setUnreadCount(0);
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     
-    await fetch("/api/notifications/read-all", {
+    await customFetch("/api/notifications/read-all", {
       method: "PUT",
       // 🟢 UPDATED: Using currentUserArtist
       headers: { Authorization: `Bearer ${currentUserArtist?.token}` }, 

@@ -17,6 +17,7 @@ import {
   SET_FEED_LOADING 
 } from "../redux/users/artistworkSlice"; 
 import { useSocket } from "../context/SocketContext";
+import customFetch from "../util/customFetch";
 
 const EMPTY_LEADERBOARD = [];
 
@@ -94,7 +95,7 @@ const ForYou = ({ activeTab }) => {
 
     try {
       const cacheBuster = Date.now();
-      const res = await fetch(
+      const res = await customFetch(
         `/api/work/feed?status=approved&page=${pageNum}&limit=10&sort=trending&_t=${cacheBuster}`,
         { headers: activeUser?.token ? { Authorization: `Bearer ${activeUser.token}` } : {} }
       );
@@ -180,7 +181,7 @@ const ForYou = ({ activeTab }) => {
     dispatch(UPDATE_SINGLE_POST(optimisticData));
 
     try {
-      await fetch(`/api/work/${postId}/like`, {
+      await customFetch(`/api/work/${postId}/like`, {
         method: "PUT",
         headers: { 
           "Content-Type": "application/json", 

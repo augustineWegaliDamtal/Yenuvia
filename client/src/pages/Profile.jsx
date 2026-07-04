@@ -23,6 +23,7 @@ import {
   Settings, Camera, LogOut, Trash2, UserPlus, 
   UserCheck, LayoutGrid, ShoppingBag, Wallet, Archive, ChevronLeft 
 } from "lucide-react";
+import customFetch from '../util/customFetch.js';
 
 const Profile = () => {
   const { currentUserArtist } = useSelector((state) => state.artist);
@@ -63,10 +64,10 @@ const Profile = () => {
       if (!targetId) return;
 
       try {
-        const userRes = await fetch(`/api/user/${targetId}`);
+        const userRes = await customFetch(`/api/user/${targetId}`);
         const userData = await userRes.json();
         
-        const statsRes = await fetch(`/api/user/stats/${targetId}`);
+        const statsRes = await customFetch(`/api/user/stats/${targetId}`);
         const statsData = await statsRes.json();
 
         if (userData.success) {
@@ -130,7 +131,7 @@ const Profile = () => {
       const fetchPurchases = async () => {
         setLoadingPurchases(true);
         try {
-          const res = await fetch('/api/order/my-orders', {
+          const res = await customFetch('/api/order/my-orders', {
             headers: { Authorization: `Bearer ${currentUserArtist?.token}` }
           });
           const data = await res.json();
@@ -150,7 +151,7 @@ const Profile = () => {
   const handleFollowToggle = async () => {
     if (!currentUserArtist) return navigate('/signin');
     try {
-      const res = await fetch(`/api/user/follow/${userData._id}`, {
+      const res = await customFetch(`/api/user/follow/${userData._id}`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${currentUserArtist.token}` }
       });
@@ -175,7 +176,7 @@ const Profile = () => {
         delete safePayload.password; 
       }
 
-      const res = await fetch(`/api/user/update/${currentUserArtist._id}`, {
+      const res = await customFetch(`/api/user/update/${currentUserArtist._id}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -205,7 +206,7 @@ const Profile = () => {
   const handleSignOut = async () => {
     try {
       dispatch(artistSignoutUserStart());
-      const res = await fetch('/api/auth/signout', { method: 'POST' });
+      const res = await customFetch('/api/auth/signout', { method: 'POST' });
       const data = await res.json();
 
       if (data.success === false) {

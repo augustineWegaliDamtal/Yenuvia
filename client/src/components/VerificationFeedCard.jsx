@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldCheck, ArrowRight, CheckCircle2, Loader2, Star } from 'lucide-react';
 import { useSelector } from 'react-redux';
+import customFetch from '../util/customFetch.js';
 
 const VerificationFeedCard = () => {
   const { currentUserArtist } = useSelector((state) => state.artist);
@@ -17,7 +18,7 @@ const VerificationFeedCard = () => {
     try {
       setLoading(true);
       // Calls the new subscription route in your verificationController
-      const response = await fetch("/api/payments/verify/initiate", {
+      const response = await customFetch("/api/payments/verify/initiate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

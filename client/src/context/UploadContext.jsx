@@ -4,6 +4,7 @@ import { useDispatch } from "react-redux";
 import { SET_LIVE_ALERT } from "../redux/users/notificationsSlice";
 import { motion, AnimatePresence } from "framer-motion";
 import { CloudUpload } from "lucide-react";
+import customFetch from "../util/customFetch";
 
 const UploadContext = createContext();
 
@@ -89,7 +90,7 @@ export const UploadProvider = ({ children }) => {
       const uploadedMedia = await Promise.all(promises);
 
       // 2. Automatically hit your backend to save it to MongoDB
-      const res = await fetch("/api/work/create-multiple", {
+      const res = await customFetch("/api/work/create-multiple", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Swords, Flame, ArrowRight, Shield, Zap, Timer, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import customFetch from '../util/customFetch.js';
 
 const DerbySnapshotCard = ({ liveUpdateTrigger }) => {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ const DerbySnapshotCard = ({ liveUpdateTrigger }) => {
       try {
         const cacheBuster = Date.now();
         // Consuming the exact same unified endpoint your HeroBanner uses for matching state
-        const res = await fetch(`/api/matches/hero-banner?_t=${cacheBuster}`);
+        const res = await customFetch(`/api/matches/hero-banner?_t=${cacheBuster}`);
         const json = await res.json();
 
         if (json.success) {
