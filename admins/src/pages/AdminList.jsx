@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import customFetch from "../utility/customFetch";
 
 const AdminList = () => {
   const { currentUser } = useSelector((state) => state.admin || {});
@@ -19,7 +20,7 @@ const AdminList = () => {
     const fetchAdmins = async () => {
       try {
         setLoading(true);
-        const res = await fetch("/api/admin", {
+        const res = await customFetch("/api/admin", {
           headers: { Authorization: `Bearer ${currentUser?.token}` },
         });
         const data = await res.json();
@@ -49,7 +50,7 @@ const AdminList = () => {
   // --- Update admin ---
   const updateAdmin = async (id, updateData) => {
     try {
-      const res = await fetch(`/api/admin/update/${id}`, {
+      const res = await customFetch(`/api/admin/update/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -72,7 +73,7 @@ const AdminList = () => {
   const deleteAdmin = async (id) => {
     if (!window.confirm("Are you sure?")) return;
     try {
-      const res = await fetch(`/api/admin/delete/${id}`, {
+      const res = await customFetch(`/api/admin/delete/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${currentUser.token}` },
       });

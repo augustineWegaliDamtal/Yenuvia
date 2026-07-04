@@ -4,6 +4,7 @@ import { signinFailure, signinStart, signinSuccess } from "../redux/user/userSli
 import { useNavigate } from "react-router-dom";
 import { saveToken } from "../../../api/utils/tokenManager";
 import { ShieldAlert, KeyRound, Mail, Loader2, ArrowLeft } from "lucide-react";
+import customFetch from "../utility/customFetch";
 
 const SuperAdminSignin = () => {
   const [form, setForm] = useState({ email: "", password: "", role: "superadmin" });
@@ -23,7 +24,7 @@ const SuperAdminSignin = () => {
     setMessage("");
 
     try {
-      const res = await fetch("/api/auth/superadmin-signin", {
+      const res = await customFetch("/api/auth/superadmin-signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

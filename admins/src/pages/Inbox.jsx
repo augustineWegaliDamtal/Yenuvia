@@ -8,6 +8,7 @@ import {
 import { Send, Paperclip, MessageSquare, X, Film } from "lucide-react"; 
 import BottomNav from "../Component.jsx/BottomNav";
 import { useSocket } from "../context/SocketContext";
+import customFetch from "../utility/customFetch";
 
 const Inbox = () => {
   const { currentUser } = useSelector((state) => state.admin);
@@ -71,8 +72,8 @@ const Inbox = () => {
   const fetchData = useCallback(async () => {
     try {
       const [rRes, mRes] = await Promise.all([
-        fetch("/api/messages/recipients", { headers: { Authorization: `Bearer ${currentUser.token}` } }),
-        fetch("/api/messages", { headers: { Authorization: `Bearer ${currentUser.token}` } })
+        customFetch("/api/messages/recipients", { headers: { Authorization: `Bearer ${currentUser.token}` } }),
+        customFetch("/api/messages", { headers: { Authorization: `Bearer ${currentUser.token}` } })
       ]);
       const rData = await rRes.json();
       const mData = await mRes.json();
@@ -167,7 +168,7 @@ const Inbox = () => {
       fd.append("content", contentToSubmit);
       if (fileToSubmit) fd.append("media", fileToSubmit);
 
-      const res = await fetch("/api/messages", {
+      const res = await customFetch("/api/messages", {
         method: "POST",
         headers: { Authorization: `Bearer ${currentUser.token}` },
         body: fd,

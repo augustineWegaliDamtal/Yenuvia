@@ -5,6 +5,7 @@ import { ShieldAlert, Plus, Swords, X, Loader2, CheckCircle2, Users, Gavel, Tras
 import DraftReviewRoom from "../Component.jsx/DraftReviewRoom";
 // 🔥 1. BRING IN THE GLOBAL SOCKET
 import { useSocket } from "../context/SocketContext";
+import customFetch from "../utility/customFetch";
 
 const AdminDashboard = () => {
   const { currentUser } = useSelector((state) => state.admin);
@@ -33,7 +34,7 @@ const AdminDashboard = () => {
       // otherwise real-time silent refreshes will cause flickering!
       if (matches.length === 0) setLoading(true); 
       
-      const res = await fetch("/api/matches?status=all");
+      const res = await customFetch("/api/matches?status=all");
       const data = await res.json();
       if (data.success) {
         setMatches(data.matches);
@@ -47,7 +48,7 @@ const AdminDashboard = () => {
 
   const fetchPayouts = useCallback(async () => {
     try {
-      const res = await fetch("/api/payouts/admin/pending", {
+      const res = await customFetch("/api/payouts/admin/pending", {
         headers: { Authorization: `Bearer ${currentUser?.token}` }
       });
       const data = await res.json();
@@ -87,7 +88,7 @@ const AdminDashboard = () => {
   const handleTakeDown = async (matchId) => {
     if (!window.confirm("🚨 Are you sure you want to scrap this item? This action is permanent.")) return;
     try {
-      const res = await fetch(`/api/matches/${matchId}`, {
+      const res = await customFetch(`/api/matches/${matchId}`, {
         method: "DELETE",
         headers: { 
             "Content-Type": "application/json",
@@ -106,7 +107,7 @@ const AdminDashboard = () => {
   const handleApprovePayout = async (payoutId) => {
     if (!window.confirm("Confirm: Have you manually sent the MoMo to this user?")) return;
     try {
-      const res = await fetch(`/api/payouts/approve/${payoutId}`, {
+      const res = await customFetch(`/api/payouts/approve/${payoutId}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${currentUser?.token}` }
       });
@@ -119,7 +120,7 @@ const AdminDashboard = () => {
     if (!window.confirm("Are you sure? This will distribute all funds and cannot be undone.")) return;
     try {
       setIsSettling(true);
-      const res = await fetch(`/api/matches/${matchId}/settle`, {
+      const res = await customFetch(`/api/matches/${matchId}/settle`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -151,7 +152,7 @@ const AdminDashboard = () => {
     const end = new Date();
     end.setDate(start.getDate() + Number(formData.daysActive));
     try {
-      const res = await fetch("/api/matches", {
+      const res = await customFetch("/api/matches", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

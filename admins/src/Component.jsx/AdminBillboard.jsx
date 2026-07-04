@@ -4,6 +4,7 @@ import { Download, Loader2, Film } from "lucide-react";
 
 import { toJpeg } from "html-to-image";
 import { useSocket } from "../context/SocketContext";
+import customFetch from "../utility/customFetch";
 
 const backgroundPreload = (url, callback) => {
   if (!url) return callback();
@@ -44,7 +45,7 @@ const AdminBillboard = ({ liveUpdateTrigger }) => {
     let isMounted = true;
     const syncBillboard = async () => {
       try {
-        const postsRes = await fetch(`/api/work/search?status=billboard&_t=${Date.now()}`);
+        const postsRes = await customFetch(`/api/work/search?status=billboard&_t=${Date.now()}`);
         const postsData = await postsRes.json();
         
         if (isMounted && postsData.success) {
@@ -75,7 +76,7 @@ const AdminBillboard = ({ liveUpdateTrigger }) => {
       const fetchFreshBillboard = async () => {
         try {
           const cacheBuster = Date.now();
-          const postsRes = await fetch(`/api/work/search?status=billboard&_t=${cacheBuster}`);
+          const postsRes = await customFetch(`/api/work/search?status=billboard&_t=${cacheBuster}`);
           const postsData = await postsRes.json();
           if (postsData.success) {
             const top6 = (postsData.works || []).slice(0, 6);
@@ -200,7 +201,7 @@ const AdminBillboard = ({ liveUpdateTrigger }) => {
         link.click();
         document.body.removeChild(link);
       } else {
-        const res = await fetch(`/api/viral/generate-video`, {
+        const res = await customFetch(`/api/viral/generate-video`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
@@ -250,7 +251,7 @@ const AdminBillboard = ({ liveUpdateTrigger }) => {
 
     setIsVideoSigning(true);
     try {
-      const res = await fetch(`/api/viral/generate-video`, {
+      const res = await customFetch(`/api/viral/generate-video`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 

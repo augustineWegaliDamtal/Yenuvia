@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import customFetch from '../utility/customFetch';
 
 const AdminDisputePanel = () => {
   const [disputedOrders, setDisputedOrders] = useState([]);
@@ -12,7 +13,7 @@ const AdminDisputePanel = () => {
     try {
       const token = localStorage.getItem('token');
       
-      const res = await fetch('/api/order/all', {
+      const res = await customFetch('/api/order/all', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -52,7 +53,7 @@ const AdminDisputePanel = () => {
     try {
       const token = localStorage.getItem('token');
       
-      const res = await fetch(`/api/order/${orderId}/resolve`, {
+      const res = await customFetch(`/api/order/${orderId}/resolve`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Loader2, PlayCircle, Trophy, Zap, AlertTriangle, X, Upload, Trash2 } from "lucide-react";
+import customFetch from "../utility/customFetch";
 
 const DraftReviewRoom = ({ match, onClose, token }) => {
   const [drafts, setDrafts] = useState([]);
@@ -25,7 +26,7 @@ const DraftReviewRoom = ({ match, onClose, token }) => {
         ? `/api/matches/${match._id}/winners` 
         : `/api/matches/${match._id}/drafts`;
         
-      const res = await fetch(endpoint, {
+      const res = await customFetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -56,7 +57,7 @@ const DraftReviewRoom = ({ match, onClose, token }) => {
       return;
     }
     if (selectedDrafts.length >= 2) {
-      alert("The Arena is currently optimized for Head-to-Head Derbies! Unselect a champion first.");
+      alert("Yenuvia is currently optimized for Head-to-Head Derbies! Unselect a champion first.");
       return;
     }
     setSelectedDrafts([...selectedDrafts, draft]);
@@ -73,7 +74,7 @@ const DraftReviewRoom = ({ match, onClose, token }) => {
       // Unselect it first if it happens to be selected
       setSelectedDrafts(prev => prev.filter(d => d._id !== draftId));
       
-      const res = await fetch(`/api/work/${draftId}`, {
+      const res = await customFetch(`/api/work/${draftId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -110,7 +111,7 @@ const DraftReviewRoom = ({ match, onClose, token }) => {
     if (crestB) formData.append("crestB", crestB);
 
     try {
-      const res = await fetch(`/api/matches/${match._id}/spawn`, {
+      const res = await customFetch(`/api/matches/${match._id}/spawn`, {
         method: "POST", 
         headers: { Authorization: `Bearer ${token}` },
         body: formData

@@ -4,6 +4,7 @@ import { Search, Trash2, Tag, LayoutDashboard, ChevronLeft, ChevronRight } from 
 
 // 🔌 1. IMPORT THE GLOBAL SOCKET
 import { useSocket } from "../context/SocketContext";
+import customFetch from "../utility/customFetch";
 
 // 🚀 Lightweight Image Slider Component (Untouched)
 const MediaCarousel = ({ urls, type, title }) => {
@@ -71,10 +72,10 @@ const SuperAdminContent = () => {
   const fetchContent = async (query = "") => {
     try {
       const [billboardRes, worksRes] = await Promise.all([
-        fetch(`/api/work/search?status=billboard&title=${query}`, {
+        customFetch(`/api/work/search?status=billboard&title=${query}`, {
           headers: { Authorization: `Bearer ${currentUser.token}` }
         }),
-        fetch(`/api/work/search?status=approved&title=${query}`, {
+        customFetch(`/api/work/search?status=approved&title=${query}`, {
           headers: { Authorization: `Bearer ${currentUser.token}` }
         })
       ]);
@@ -151,7 +152,7 @@ const SuperAdminContent = () => {
   const handleDeleteWork = async (id) => {
     if (!window.confirm("Take down this work? This action cannot be undone.")) return;
     try {
-      const res = await fetch(`/api/work/${id}`, {
+      const res = await customFetch(`/api/work/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${currentUser.token}` }
       });
@@ -168,7 +169,7 @@ const SuperAdminContent = () => {
 
   if (loading) return (
     <div className="flex h-[50vh] items-center justify-center">
-        <p className="text-slate-400 font-bold uppercase tracking-widest animate-pulse">Loading Arena Content...</p>
+        <p className="text-slate-400 font-bold uppercase tracking-widest animate-pulse">Loading Yenuvia Content...</p>
     </div>
   );
 

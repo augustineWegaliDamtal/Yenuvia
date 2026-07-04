@@ -1,6 +1,7 @@
 import React from 'react'
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
+import customFetch from '../utility/customFetch';
 
 const SetChallengeForms = () => {
  const [topic, setTopic] = useState("");
@@ -15,7 +16,7 @@ const { currentUser } = useSelector((state) => state.admin);
     setMessage("");
 
     try {
-      const res = await fetch("/api/challenge/set-weekly", {
+      const res = await customFetch("/api/challenge/set-weekly", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

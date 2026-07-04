@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { signinSuccess } from "../redux/user/userSlice";
 import LogoutButton from "../Component.jsx/LogoutButton";
 import { Camera, User, Mail, Lock, Loader2 } from "lucide-react";
+import customFetch from "../utility/customFetch";
 
 const SuperAdminProfile = () => {
   const { currentUser } = useSelector((state) => state.admin);
@@ -45,7 +46,7 @@ const SuperAdminProfile = () => {
       if (avatarFile) submitData.append("avatar", avatarFile); 
 
       // Matches your admin router setup
-      const res = await fetch(`/api/admin/profile/${currentUser._id}`, {
+      const res = await customFetch(`/api/admin/profile/${currentUser._id}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${currentUser.token}`,

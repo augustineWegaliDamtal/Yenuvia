@@ -5,6 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { signinSuccess, signoutUserSuccess } from "../redux/user/userSlice";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { User, Mail, Lock, LogOut, Trash2, Edit3, Save, X, Camera } from "lucide-react";
+import customFetch from "../utility/customFetch";
 
 const Profile = () => {
   const { currentUser } = useSelector((state) => state.admin);
@@ -38,7 +39,7 @@ const Profile = () => {
           ? `/api/artists/${id}` 
           : `/api/user/${id}`;
 
-        const res = await fetch(endpoint, {
+        const res = await customFetch(endpoint, {
           headers: { Authorization: `Bearer ${currentUser.token}` },
         });
         const data = await res.json();
@@ -84,7 +85,7 @@ const Profile = () => {
         submitData.append("avatar", avatarFile);
       }
 
-      const res = await fetch(`/api/admin/profile/${currentUser._id}`, {
+      const res = await customFetch(`/api/admin/profile/${currentUser._id}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${currentUser.token}`,
@@ -112,7 +113,7 @@ const Profile = () => {
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete your account? This is permanent.")) return;
     try {
-      const res = await fetch(`/api/admin/profile/${currentUser._id}`, {
+      const res = await customFetch(`/api/admin/profile/${currentUser._id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${currentUser.token}` },
       });

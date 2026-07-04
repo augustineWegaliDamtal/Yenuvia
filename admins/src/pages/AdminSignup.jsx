@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { UserPlus, User, Mail, Lock, Loader2, ArrowLeft, Shield } from "lucide-react";
+import customFetch from "../utility/customFetch";
 
 // Accept onClose as a prop from the SuperAdminDashboard overlay
 const AdminSignup = ({ onClose }) => {
@@ -19,7 +20,7 @@ const AdminSignup = ({ onClose }) => {
 
     try {
       // Points to your secure backend route: router.post("/", verifyToken, verifySuperAdmin, createAdmin);
-      const res = await fetch("/api/admin/", {
+      const res = await customFetch("/api/admin/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

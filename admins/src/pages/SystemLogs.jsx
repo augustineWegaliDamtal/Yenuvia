@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import customFetch from "../utility/customFetch";
 
 const SystemLogs = () => {
   const { currentUser } = useSelector((state) => state.admin);
@@ -14,7 +15,7 @@ const SystemLogs = () => {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const res = await fetch("/api/system-logs", {
+        const res = await customFetch("/api/system-logs", {
           headers: { Authorization: `Bearer ${currentUser.token}` },
         });
         const data = await res.json();

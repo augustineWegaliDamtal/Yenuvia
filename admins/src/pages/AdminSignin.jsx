@@ -4,6 +4,7 @@ import { signinFailure, signinStart, signinSuccess } from "../redux/user/userSli
 import { useNavigate } from "react-router-dom";
 import { saveToken } from "../../../api/utils/tokenManager";
 import { UserCheck, Lock, Mail, Loader2, ArrowLeft, User, ShieldAlert } from "lucide-react";
+import customFetch from "../utility/customFetch";
 
 const AdminSignin = () => {
   const [form, setForm] = useState({ username: "", email: "", password: "", role: "superadmin" });
@@ -25,7 +26,7 @@ const AdminSignin = () => {
     // --- REGISTRATION FLOW ---
     if (!isLogin) {
       try {
-        const res = await fetch("/api/auth/admin-signup", {
+        const res = await customFetch("/api/auth/admin-signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(form),
@@ -48,7 +49,7 @@ const AdminSignin = () => {
     // --- SIGN IN FLOW ---
     dispatch(signinStart());
     try {
-      const res = await fetch("/api/auth/admin-signin", {
+      const res = await customFetch("/api/auth/admin-signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: form.email, password: form.password }), 

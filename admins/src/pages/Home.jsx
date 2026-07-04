@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import Dashboard from "./Dashboard"; 
 import { Loader2, Monitor, LayoutGrid, X, CheckCircle2, Tag, ShoppingBag } from "lucide-react";
+import customFetch from "../utility/customFetch";
 
 const Home = () => {
   const { currentUser } = useSelector((state) => state.admin || state.user || {});
@@ -22,7 +23,7 @@ const Home = () => {
   const fetchDashboard = useCallback(async () => {
     if (!currentUser?.token) return;
     try {
-      const res = await fetch("/api/work/dashboard", {
+      const res = await customFetch("/api/work/dashboard", {
         headers: { Authorization: `Bearer ${currentUser.token}` },
       });
       const data = await res.json();
@@ -52,7 +53,7 @@ const Home = () => {
 
   const handleApprove = async (id, destination) => {
     try {
-      const res = await fetch(`/api/work/${id}/approve`, {
+      const res = await customFetch(`/api/work/${id}/approve`, {
         method: "PATCH", 
         headers: {
           "Content-Type": "application/json",
@@ -77,7 +78,7 @@ const Home = () => {
 
   const handleReject = async (id) => {
     try {
-      const res = await fetch(`/api/work/${id}/reject`, {
+      const res = await customFetch(`/api/work/${id}/reject`, {
         method: "PATCH",
         headers: { 
           Authorization: `Bearer ${currentUser.token}`,
@@ -132,7 +133,7 @@ const Home = () => {
         {pendingContent.length === 0 ? (
           <div className="bg-white p-24 rounded-[3rem] text-center border-4 border-dashed border-gray-100 flex flex-col items-center">
               <CheckCircle2 size={48} className="text-emerald-400 mb-4" />
-              <p className="text-gray-400 font-black uppercase tracking-[0.2em] italic">The Arena is Clear</p>
+              <p className="text-gray-400 font-black uppercase tracking-[0.2em] italic">Yenuvia is Clear</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32">

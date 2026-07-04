@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import customFetch from "../utility/customFetch";
 
 const AwardVerification = () => {
   const [artists, setArtists] = useState([]);
@@ -11,7 +12,7 @@ const AwardVerification = () => {
   // Fetch all artists for super admin view
   useEffect(() => {
   const fetchArtists = async () => {
-    const res = await fetch("/api/artists", {
+    const res = await customFetch("/api/artists", {
       headers: {  Authorization: `Bearer ${currentUser.token}` },
     });
     const data = await res.json();
@@ -25,7 +26,7 @@ const AwardVerification = () => {
   // Award verification handler
   const handleVerify = async (id) => {
     try {
-      const res = await fetch(`/api/payments/verify/${id}`, {
+      const res = await customFetch(`/api/payments/verify/${id}`, {
         method: "PUT",
         headers: {  Authorization: `Bearer ${currentUser.token}`, },
       });
@@ -43,7 +44,7 @@ const AwardVerification = () => {
   };
   const handleUnverify = async (id) => {
   try {
-    const res = await fetch(`/api/payments/unverify/${id}`, {
+    const res = await customFetch(`/api/payments/unverify/${id}`, {
       method: "PUT",
       headers: { Authorization: `Bearer ${currentUser.token}` },
     });

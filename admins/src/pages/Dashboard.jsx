@@ -10,6 +10,7 @@ import {
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 import { Bell, Zap, CheckCircle, XCircle, Trash2, Search, RefreshCw, Loader2, Tag, ShoppingBag } from "lucide-react";
+import customFetch from "../utility/customFetch";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -49,7 +50,7 @@ const Dashboard = () => {
         if (value) queryParams.append(key, value);
       });
 
-      const res = await fetch(`/api/work/search?${queryParams.toString()}`, {
+      const res = await customFetch(`/api/work/search?${queryParams.toString()}`, {
         headers: { 
             "Content-Type": "application/json",
             "Authorization": `Bearer ${currentUser.token}` 
@@ -64,7 +65,7 @@ const Dashboard = () => {
         setError(data.message);
       }
     } catch (err) {
-      console.error("💥 ARENA CRASH:", err);
+      console.error("💥 Yenuvia CRASH:", err);
       setError("Connection to Arena failed.");
     } finally {
       if (!isSilent) setLoading(false);
@@ -132,7 +133,7 @@ const Dashboard = () => {
   const handleAction = async (ids, action, destination = "feed") => {
     try {
       const promises = ids.map(id => 
-        fetch(`/api/work/${id}/${action}`, {
+        customFetch(`/api/work/${id}/${action}`, {
           method: "PATCH", 
           headers: {
             "Content-Type": "application/json",

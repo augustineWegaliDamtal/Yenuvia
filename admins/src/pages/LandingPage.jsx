@@ -29,7 +29,7 @@ const LandingPage = () => {
           <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-lg flex items-center justify-center shadow-lg shadow-orange-900/20">
             <span className="text-black font-black text-xl">A</span>
           </div>
-          <span className="text-xl font-bold tracking-tighter uppercase italic">Arena Admin</span>
+          <span className="text-xl font-bold tracking-tighter uppercase italic">Yenuvia Admin</span>
         </div>
         <div className="space-x-4">
           <button 
@@ -61,7 +61,7 @@ const LandingPage = () => {
 
         <p className="max-w-2xl text-gray-400 text-lg md:text-xl mb-10 leading-relaxed">
           The central nervous system for the Ghana Art Exhibition. Manage artists, 
-          broadcast challenges, and curate the Arena in real-time.
+          broadcast challenges, and curate Creativity in real-time.
         </p>
 
         <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6">
@@ -102,7 +102,7 @@ const LandingPage = () => {
 
       {/* --- Footer --- */}
       <footer className="p-10 border-t border-white/5 text-center text-gray-600 text-sm">
-        © 2026 ARENA GHANA • DEVELOPED FOR EXCELLENCE
+        © 2026 Yenuvia GHANA • DEVELOPED FOR EXCELLENCE
       </footer>
     </div>
   );
