@@ -1,13 +1,22 @@
-// client/src/api/utils/customFetch.js
-
 const customFetch = async (endpoint, options = {}) => {
-  // Automatically fallback to empty string if running locally with a proxy
   const baseURL = import.meta.env.VITE_BACKEND_URL || '';
-  
-  // Combine them cleanly
   const url = `${baseURL}${endpoint}`;
 
-  return fetch(url, options);
+  // 1. Get the token from storage
+  const token = localStorage.getItem('token'); 
+
+  // 2. Set up headers, adding the Authorization if a token exists
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...options.headers, // Allow individual requests to override/add headers
+  };
+
+  // 3. Perform the fetch with the new headers
+  return fetch(url, {
+    ...options,
+    headers,
+  });
 };
 
 export default customFetch;
