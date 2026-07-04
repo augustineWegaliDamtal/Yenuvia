@@ -9,7 +9,7 @@ import customFetch from "../utility/customFetch";
 const SuperAdminSignin = () => {
   const [form, setForm] = useState({ email: "", password: "", role: "superadmin" });
   const [message, setMessage] = useState("");
-  const { loading } = useSelector((state) => state.admin); // Use global loading state from Redux
+  const { loading } = useSelector((state) => state.admin); 
   
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -33,7 +33,13 @@ const SuperAdminSignin = () => {
       const data = await res.json();
       if (data.success) {
         if (data.user.role === "superadmin") {
-          saveToken("access_token", data.token);
+          
+          // 🚀 1. The New Way: Feeds customFetch to stop the 401 errors
+          saveToken("superadminUser", data.token); 
+          
+          // 🛡️ 2. The Safety Net: Keeps legacy app components from crashing
+          localStorage.setItem("access_token", data.token); 
+          
           dispatch(signinSuccess({ ...data.user, token: data.token }));
           setMessage("✅ Superadmin Access Granted");
           setTimeout(() => navigate("/superadmin"), 1000);
@@ -104,7 +110,7 @@ const SuperAdminSignin = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-white text-black py-4 rounded-xl font-black text-lg hover:bg-red-600 hover:text-white transition-all active:scale-95 flex items-center justify-center space-x-2"
+              className="w-full bg-white text-black py-4 rounded-xl font-black text-lg hover:bg-red-600 hover:text-white transition-all active:scale-95 flex items-center justify-center space-x-2 cursor-pointer"
             >
               {loading ? (
                 <>
@@ -131,7 +137,7 @@ const SuperAdminSignin = () => {
 
         {/* System ID */}
         <p className="mt-8 text-center text-gray-600 text-xs font-mono tracking-widest uppercase">
-          Arena.Core.Systems // Root_Access.v3
+          Yenuvia.Core.Systems // Root_Access.v3
         </p>
       </div>
     </div>
