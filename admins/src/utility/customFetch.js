@@ -1,18 +1,23 @@
+// Adjust this import path so it correctly points to your tokenManager.js file
+import { getToken } from './tokenManager'; 
+
 const customFetch = async (endpoint, options = {}) => {
   const baseURL = import.meta.env.VITE_BACKEND_URL || '';
   const url = `${baseURL}${endpoint}`;
 
-  // 1. Get the token from storage
- const token = localStorage.getItem('access_token'); 
+  // Cascade through your roles to find whichever token is currently active
+  const token = 
+    getToken('superadminUser') || 
+    getToken('adminUser') || 
+    getToken('artistUser');
 
-  // 2. Set up headers, adding the Authorization if a token exists
   const headers = {
     'Content-Type': 'application/json',
+    // If a token was found, attach it. Otherwise, do nothing.
     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-    ...options.headers, // Allow individual requests to override/add headers
+    ...options.headers,
   };
 
-  // 3. Perform the fetch with the new headers
   return fetch(url, {
     ...options,
     headers,
