@@ -3,7 +3,7 @@ const customFetch = async (endpoint, options = {}) => {
   const url = `${baseURL}${endpoint}`;
 
   // 1. Get the token from storage
-  const token = localStorage.getItem('token'); 
+ const token = localStorage.getItem('access_token'); 
 
   // 2. Set up headers, adding the Authorization if a token exists
   const headers = {
