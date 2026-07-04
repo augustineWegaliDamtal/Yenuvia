@@ -57,7 +57,8 @@ origin: [
   process.env.ARTIST_CLIENT_URL, 
   process.env.ADMIN_CLIENT_URL,
   process.env.BUYER_CLIENT_URL,
-  "https://yenuvia-client.vercel.app", // <-- ADD THIS LINE
+  "https://yenuvia-client.vercel.app",
+  "https://yenuvia-admin.vercel.app",
   "http://localhost:5173", 
   "http://localhost:5174", 
   "http://localhost:5175"
