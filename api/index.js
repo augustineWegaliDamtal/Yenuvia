@@ -53,16 +53,17 @@ initSocket(server);
 
 app.use(cors({
   // 🚀 PRODUCTION READY
-  origin: [
-    process.env.ARTIST_CLIENT_URL, 
-    process.env.ADMIN_CLIENT_URL,
-    process.env.BUYER_CLIENT_URL,
-    "http://localhost:5173", 
-    "http://localhost:5174", 
-    "http://localhost:5175"
-  ], 
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"] 
+origin: [
+  process.env.ARTIST_CLIENT_URL, 
+  process.env.ADMIN_CLIENT_URL,
+  process.env.BUYER_CLIENT_URL,
+  "https://yenuvia-client.vercel.app", // <-- ADD THIS LINE
+  "http://localhost:5173", 
+  "http://localhost:5174", 
+  "http://localhost:5175"
+], 
+credentials: true,
+methods: ["GET", "POST", "PUT", "PATCH", "DELETE"] 
 }));
 
 app.use(cookieParser());
