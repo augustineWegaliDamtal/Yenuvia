@@ -170,7 +170,6 @@ const Inbox = () => {
 
       const res = await customFetch("/api/messages", {
         method: "POST",
-        headers: { Authorization: `Bearer ${currentUser.token}` },
         body: fd,
       });
 

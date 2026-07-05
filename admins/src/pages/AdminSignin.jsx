@@ -28,7 +28,6 @@ const AdminSignin = () => {
       try {
         const res = await customFetch("/api/auth/admin-signup", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(form),
         });
 
@@ -51,7 +50,6 @@ const AdminSignin = () => {
     try {
       const res = await customFetch("/api/auth/admin-signin", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: form.email, password: form.password }), 
       });
 

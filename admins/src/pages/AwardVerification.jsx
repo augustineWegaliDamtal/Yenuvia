@@ -12,9 +12,7 @@ const AwardVerification = () => {
   // Fetch all artists for super admin view
   useEffect(() => {
   const fetchArtists = async () => {
-    const res = await customFetch("/api/artists", {
-      headers: {  Authorization: `Bearer ${currentUser.token}` },
-    });
+    const res = await customFetch("/api/artists");
     const data = await res.json();
     if (data.success) setArtists(data.artists);
     setLoading(false);
@@ -28,7 +26,7 @@ const AwardVerification = () => {
     try {
       const res = await customFetch(`/api/payments/verify/${id}`, {
         method: "PUT",
-        headers: {  Authorization: `Bearer ${currentUser.token}`, },
+        
       });
       const data = await res.json();
       if (data.success) {
@@ -46,7 +44,7 @@ const AwardVerification = () => {
   try {
     const res = await customFetch(`/api/payments/unverify/${id}`, {
       method: "PUT",
-      headers: { Authorization: `Bearer ${currentUser.token}` },
+      
     });
     const data = await res.json();
     if (data.success) {

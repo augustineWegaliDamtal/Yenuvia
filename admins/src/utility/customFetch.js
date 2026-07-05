@@ -4,33 +4,33 @@ const customFetch = async (endpoint, options = {}) => {
   const baseURL = import.meta.env.VITE_BACKEND_URL || '';
   const url = `${baseURL}${endpoint}`;
 
-  // 🛡️ 1. Identify public authentication routes (login, signin, etc.)
-  const isAuthRoute = endpoint.includes('/api/auth/');
+  // 1. Identify the token regardless of route 
+  // (Let the backend's verifyToken middleware handle the 'unauthorized' logic)
+  const rawToken = getToken('superadminUser') || getToken('adminUser') || getToken('artistUser');
+  const token = (rawToken && rawToken !== 'null' && rawToken !== 'undefined') ? rawToken : null;
 
-  // 🛡️ 2. Only look for a token if we are NOT on a login route
-  const token = !isAuthRoute 
-    ? (getToken('superadminUser') || getToken('adminUser') || getToken('artistUser'))
-    : null;
+  // 2. Prepare Headers
+  const headers = { ...options.headers };
 
-  const headers = {
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-    ...options.headers,
-  };
+  // 3. Always attach the Authorization header if a token is present
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
 
-  // 🚀 3. Bulletproof File handling
+  // 4. Bulletproof File handling (Crucial for Admin Image/Work uploads)
   if (options.body instanceof FormData) {
-    // If it's a file upload, completely remove Content-Type.
-    // The browser must set this automatically with the correct WebKit boundary.
-    delete headers['Content-Type'];
+    delete headers['Content-Type']; // Browser handles the boundary automatically
   } else if (!headers['Content-Type']) {
-    // Default to JSON for standard REST payloads
     headers['Content-Type'] = 'application/json';
   }
 
-  return fetch(url, {
+  // 5. Execute and return
+  const response = await fetch(url, {
     ...options,
     headers,
   });
+
+  return response;
 };
 
 export default customFetch;

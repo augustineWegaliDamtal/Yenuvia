@@ -26,7 +26,6 @@ const SuperAdminSignin = () => {
     try {
       const res = await customFetch("/api/auth/superadmin-signin", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
 
@@ -38,7 +37,7 @@ const SuperAdminSignin = () => {
           saveToken("superadminUser", data.token); 
           
           // 🛡️ 2. The Safety Net: Keeps legacy app components from crashing
-          localStorage.setItem("access_token", data.token); 
+          localStorage.setItem("superadminUser", data.token); 
           
           dispatch(signinSuccess({ ...data.user, token: data.token }));
           setMessage("✅ Superadmin Access Granted");

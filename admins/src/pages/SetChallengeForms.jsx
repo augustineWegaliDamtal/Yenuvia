@@ -18,10 +18,6 @@ const { currentUser } = useSelector((state) => state.admin);
     try {
       const res = await customFetch("/api/challenge/set-weekly", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${currentUser.token}`
-        },
         body: JSON.stringify({ topic, description }),
       });
 

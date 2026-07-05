@@ -23,9 +23,7 @@ const Home = () => {
   const fetchDashboard = useCallback(async () => {
     if (!currentUser?.token) return;
     try {
-      const res = await customFetch("/api/work/dashboard", {
-        headers: { Authorization: `Bearer ${currentUser.token}` },
-      });
+      const res = await customFetch("/api/work/dashboard");
       const data = await res.json();
       
       if (data.success) {
@@ -55,10 +53,6 @@ const Home = () => {
     try {
       const res = await customFetch(`/api/work/${id}/approve`, {
         method: "PATCH", 
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${currentUser.token}`,
-        },
         body: JSON.stringify({ destination }), 
       });
       
@@ -80,10 +74,6 @@ const Home = () => {
     try {
       const res = await customFetch(`/api/work/${id}/reject`, {
         method: "PATCH",
-        headers: { 
-          Authorization: `Bearer ${currentUser.token}`,
-          "Content-Type": "application/json"
-        },
         body: JSON.stringify({ reason: "Does not meet Arena standards" })
       });
       const data = await res.json();

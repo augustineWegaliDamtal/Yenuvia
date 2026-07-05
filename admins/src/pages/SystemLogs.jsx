@@ -15,9 +15,7 @@ const SystemLogs = () => {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const res = await customFetch("/api/system-logs", {
-          headers: { Authorization: `Bearer ${currentUser.token}` },
-        });
+        const res = await customFetch("/api/system-logs");
         const data = await res.json();
         if (data.success && Array.isArray(data.logs)) {
           setLogs(data.logs);

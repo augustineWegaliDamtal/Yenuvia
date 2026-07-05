@@ -22,7 +22,6 @@ const AdminSignup = ({ onClose }) => {
       // Points to your secure backend route: router.post("/", verifyToken, verifySuperAdmin, createAdmin);
       const res = await customFetch("/api/admin/", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
 

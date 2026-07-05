@@ -20,9 +20,7 @@ const AdminList = () => {
     const fetchAdmins = async () => {
       try {
         setLoading(true);
-        const res = await customFetch("/api/admin", {
-          headers: { Authorization: `Bearer ${currentUser?.token}` },
-        });
+        const res = await customFetch("/api/admin");
         const data = await res.json();
 
         if (data.success) {
@@ -52,10 +50,6 @@ const AdminList = () => {
     try {
       const res = await customFetch(`/api/admin/update/${id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${currentUser.token}`,
-        },
         body: JSON.stringify(updateData),
       });
       const data = await res.json();
@@ -75,7 +69,7 @@ const AdminList = () => {
     try {
       const res = await customFetch(`/api/admin/delete/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${currentUser.token}` },
+        
       });
       const data = await res.json();
       if (data.success) {

@@ -26,9 +26,7 @@ const DraftReviewRoom = ({ match, onClose, token }) => {
         ? `/api/matches/${match._id}/winners` 
         : `/api/matches/${match._id}/drafts`;
         
-      const res = await customFetch(endpoint, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await customFetch(endpoint);
       const data = await res.json();
       if (data.success) setDrafts(data.drafts || []);
     } catch (err) {
@@ -76,7 +74,6 @@ const DraftReviewRoom = ({ match, onClose, token }) => {
       
       const res = await customFetch(`/api/work/${draftId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
       });
       
       const data = await res.json();
@@ -113,7 +110,6 @@ const DraftReviewRoom = ({ match, onClose, token }) => {
     try {
       const res = await customFetch(`/api/matches/${match._id}/spawn`, {
         method: "POST", 
-        headers: { Authorization: `Bearer ${token}` },
         body: formData
       });
       const data = await res.json();

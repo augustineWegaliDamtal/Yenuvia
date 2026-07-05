@@ -48,9 +48,6 @@ const SuperAdminProfile = () => {
       // Matches your admin router setup
       const res = await customFetch(`/api/admin/profile/${currentUser._id}`, {
         method: "PUT",
-        headers: {
-          Authorization: `Bearer ${currentUser.token}`,
-        },
         body: submitData,
       });
 

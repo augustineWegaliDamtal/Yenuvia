@@ -72,12 +72,8 @@ const SuperAdminContent = () => {
   const fetchContent = async (query = "") => {
     try {
       const [billboardRes, worksRes] = await Promise.all([
-        customFetch(`/api/work/search?status=billboard&title=${query}`, {
-          headers: { Authorization: `Bearer ${currentUser.token}` }
-        }),
-        customFetch(`/api/work/search?status=approved&title=${query}`, {
-          headers: { Authorization: `Bearer ${currentUser.token}` }
-        })
+        customFetch(`/api/work/search?status=billboard&title=${query}`),
+        customFetch(`/api/work/search?status=approved&title=${query}`)
       ]);
       const billboardData = await billboardRes.json();
       const worksData = await worksRes.json();

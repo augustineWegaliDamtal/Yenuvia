@@ -203,7 +203,7 @@ const AdminBillboard = ({ liveUpdateTrigger }) => {
       } else {
         const res = await customFetch(`/api/viral/generate-video`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          
           body: JSON.stringify({ 
             imageUrls: [currentMediaUrl], 
             artistName: currentPost?.artistId?.username || "Yenuvia Creator",
@@ -253,7 +253,7 @@ const AdminBillboard = ({ liveUpdateTrigger }) => {
     try {
       const res = await customFetch(`/api/viral/generate-video`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+       
         body: JSON.stringify({ 
           imageUrls: imageOnlyUrls,
           artistName: currentPost?.artistId?.username || "YenuviaCreator",

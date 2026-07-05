@@ -15,10 +15,6 @@ const AdminDisputePanel = () => {
       
       const res = await customFetch('/api/order/all', {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
       });
       
       const data = await res.json();
@@ -55,10 +51,6 @@ const AdminDisputePanel = () => {
       
       const res = await customFetch(`/api/order/${orderId}/resolve`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({ decision })
       });
 

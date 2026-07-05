@@ -39,9 +39,7 @@ const Profile = () => {
           ? `/api/artists/${id}` 
           : `/api/user/${id}`;
 
-        const res = await customFetch(endpoint, {
-          headers: { Authorization: `Bearer ${currentUser.token}` },
-        });
+        const res = await customFetch(endpoint);
         const data = await res.json();
 
         if (data.success) {
@@ -87,9 +85,6 @@ const Profile = () => {
 
       const res = await customFetch(`/api/admin/profile/${currentUser._id}`, {
         method: "PUT",
-        headers: {
-          Authorization: `Bearer ${currentUser.token}`,
-        },
         body: submitData, 
       });
       
@@ -115,7 +110,6 @@ const Profile = () => {
     try {
       const res = await customFetch(`/api/admin/profile/${currentUser._id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${currentUser.token}` },
       });
       const data = await res.json();
       if (data.success) {

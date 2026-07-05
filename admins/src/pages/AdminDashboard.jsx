@@ -48,9 +48,7 @@ const AdminDashboard = () => {
 
   const fetchPayouts = useCallback(async () => {
     try {
-      const res = await customFetch("/api/payouts/admin/pending", {
-        headers: { Authorization: `Bearer ${currentUser?.token}` }
-      });
+      const res = await customFetch("/api/payouts/admin/pending");
       const data = await res.json();
       if (data.success) setPayouts(data.requests);
     } catch (error) {
@@ -90,10 +88,6 @@ const AdminDashboard = () => {
     try {
       const res = await customFetch(`/api/matches/${matchId}`, {
         method: "DELETE",
-        headers: { 
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${currentUser?.token}` 
-        }
       });
       const data = await res.json();
       if (data.success) fetchAdminMatches();
@@ -109,7 +103,6 @@ const AdminDashboard = () => {
     try {
       const res = await customFetch(`/api/payouts/approve/${payoutId}`, {
         method: "PUT",
-        headers: { Authorization: `Bearer ${currentUser?.token}` }
       });
       const data = await res.json();
       if (data.success) fetchPayouts(); 
@@ -122,10 +115,6 @@ const AdminDashboard = () => {
       setIsSettling(true);
       const res = await customFetch(`/api/matches/${matchId}/settle`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${currentUser?.token}`
-        },
         body: JSON.stringify({ winningContenderId })
       });
       const data = await res.json();
@@ -154,10 +143,6 @@ const AdminDashboard = () => {
     try {
       const res = await customFetch("/api/matches", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${currentUser?.token}`
-        },
         body: JSON.stringify({
           directive: formData.directive,
           league: formData.league,

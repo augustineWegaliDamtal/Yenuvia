@@ -50,12 +50,7 @@ const Dashboard = () => {
         if (value) queryParams.append(key, value);
       });
 
-      const res = await customFetch(`/api/work/search?${queryParams.toString()}`, {
-        headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${currentUser.token}` 
-        },
-      });
+      const res = await customFetch(`/api/work/search?${queryParams.toString()}`);
 
       const data = await res.json();
       if (data.success) {
@@ -135,10 +130,6 @@ const Dashboard = () => {
       const promises = ids.map(id => 
         customFetch(`/api/work/${id}/${action}`, {
           method: "PATCH", 
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${currentUser.token}`,
-          },
           body: action === "approve" 
             ? JSON.stringify({ destination }) 
             : JSON.stringify({ reason: "Batch Moderation" }),
