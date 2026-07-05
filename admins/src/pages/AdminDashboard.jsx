@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useSelector } from "react-redux";
+
 import { motion, AnimatePresence } from "framer-motion";
 import { ShieldAlert, Plus, Swords, X, Loader2, CheckCircle2, Users, Gavel, Trash2, Banknote, Phone, Trophy } from "lucide-react"; 
 import DraftReviewRoom from "../Component.jsx/DraftReviewRoom";
@@ -8,7 +8,7 @@ import { useSocket } from "../context/SocketContext";
 import customFetch from "../utility/customFetch";
 
 const AdminDashboard = () => {
-  const { currentUser } = useSelector((state) => state.admin);
+  
 
   const [matches, setMatches] = useState([]);
   const [payouts, setPayouts] = useState([]);

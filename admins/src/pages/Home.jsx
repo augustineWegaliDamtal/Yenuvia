@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useSelector } from "react-redux";
+
 import Dashboard from "./Dashboard"; 
 import { Loader2, Monitor, LayoutGrid, X, CheckCircle2, Tag, ShoppingBag } from "lucide-react";
 import customFetch from "../utility/customFetch";
 
 const Home = () => {
-  const { currentUser } = useSelector((state) => state.admin || state.user || {});
+  
   
   const [counts, setCounts] = useState({
     admins: 0,

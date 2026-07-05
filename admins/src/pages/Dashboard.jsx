@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import {  useDispatch } from "react-redux";
 // ✅ GLOBAL SOCKET
 import { useSocket } from "../context/SocketContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,17 +9,13 @@ import {
   Title, Tooltip, Legend 
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import { Bell, Zap, CheckCircle, XCircle, Trash2, Search, RefreshCw, Loader2, Tag, ShoppingBag } from "lucide-react";
+import { Bell, Zap, CheckCircle, XCircle, Trash2, Search, RefreshCw, Loader2, Tag } from "lucide-react";
 import customFetch from "../utility/customFetch";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const Dashboard = () => {
   const dispatch = useDispatch();
-  
-  const adminState = useSelector((state) => state.admin);
-  const userState = useSelector((state) => state.user);
-  const currentUser = adminState?.currentUser || userState?.currentUser || null;
 
   const [works, setWorks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,13 +30,8 @@ const Dashboard = () => {
   // ✅ USE THE GLOBAL SOCKET
   const socket = useSocket();
 
-  // 📥 THE FETCH ENGINE (Now supports Silent Background Refreshes)
+    // 📥 THE FETCH ENGINE (Now supports Silent Background Refreshes)
   const fetchWorks = useCallback(async (isSilent = false) => {
-    if (!currentUser?.token) {
-      setLoading(false);
-      return;
-    }
-
     try {
       // Only show the big loading spinner if it's NOT a background socket refresh
       if (!isSilent) setLoading(true);
@@ -65,7 +56,7 @@ const Dashboard = () => {
     } finally {
       if (!isSilent) setLoading(false);
     }
-  }, [filters, currentUser?.token]);
+  }, [filters]); 
 
   // 🔄 THE SMART REFRESH TRIGGER
   useEffect(() => {
@@ -76,9 +67,9 @@ const Dashboard = () => {
     fetchWorks(isSilentRefresh);
   }, [fetchWorks, liveUpdateTrigger]);
 
-  // ⚡ THE REAL-TIME OBSERVER ROOM
+    // ⚡ THE REAL-TIME OBSERVER ROOM
   useEffect(() => {
-    if (!currentUser?._id || !socket) return;
+    if (!socket) return; // 🗑️ Removed currentUser?._id check
 
     setIsLive(socket.connected);
     const onConnect = () => setIsLive(true);
@@ -111,7 +102,6 @@ const Dashboard = () => {
        dispatch(INCREMENT_UNREAD_ADMIN());
     };
 
-    // 🚨 THE FIX: Listen to the EXACT event name your backend emits
     socket.on("newWorkSubmitted", handleNewPending); 
     socket.on("sale_success", handleSaleSuccess);
     socket.on("funds_released", handleFundsReleased);
@@ -123,7 +113,7 @@ const Dashboard = () => {
       socket.off("sale_success", handleSaleSuccess);
       socket.off("funds_released", handleFundsReleased);
     }
-  }, [currentUser, dispatch, socket]); 
+  }, [dispatch, socket]); // 🗑️ Removed currentUser from dependencies
 
   const handleAction = async (ids, action, destination = "feed") => {
     try {

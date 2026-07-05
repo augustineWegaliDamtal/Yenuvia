@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import customFetch from "../utility/customFetch";
 
 const AdminList = () => {
-  const { currentUser } = useSelector((state) => state.admin || {});
+  
   
   const [admins, setAdmins] = useState([]);
   const [counts, setCounts] = useState({ admins: 0, superadmins: 0, artists: 0 });

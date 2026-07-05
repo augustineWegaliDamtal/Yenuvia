@@ -11,7 +11,7 @@ import { useSocket } from "../context/SocketContext";
 import customFetch from "../utility/customFetch";
 
 const Inbox = () => {
-  const { currentUser } = useSelector((state) => state.admin);
+  
   const { unreadMap } = useSelector((state) => state.adminNotifications);
   const dispatch = useDispatch();
   
