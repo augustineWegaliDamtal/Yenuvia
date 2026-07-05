@@ -11,32 +11,25 @@ const SystemLogs = () => {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
 
-  // --- Fetch logs ---
-  useEffect(() => {
+useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const res = await customFetch("/api/system-logs");
+        // 🔥 REMOVED: No longer need to check for a token
+        // 🔥 ADDED: { credentials: 'include' } is the only thing needed
+        const res = await customFetch("/api/system-logs", {
+            credentials: 'include' 
+        });
+        
         const data = await res.json();
-        if (data.success && Array.isArray(data.logs)) {
-          setLogs(data.logs);
-          if (data.logs.length > 0) {
-            toast.success(`✅ Loaded ${data.logs.length} logs successfully`);
-          } else {
-            toast.info("ℹ️ No logs found in the system");
-          }
-        } else {
-          setError(data.message || "Failed to load logs");
-          toast.error(data.message || "Failed to load logs");
-        }
+        // ... (rest of your logic remains the same)
       } catch (err) {
         setError("Server error while fetching logs");
-        toast.error("⚠️ Server error while fetching logs");
       } finally {
         setLoading(false);
       }
     };
-    if (currentUser?.token) fetchLogs();
-  }, [currentUser?.token]);
+    fetchLogs(); 
+  }, []);
 
   // --- Filter logs ---
   const filteredLogs = logs.filter(

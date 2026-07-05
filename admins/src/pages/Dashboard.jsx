@@ -30,10 +30,8 @@ const Dashboard = () => {
   // ✅ USE THE GLOBAL SOCKET
   const socket = useSocket();
 
-    // 📥 THE FETCH ENGINE (Now supports Silent Background Refreshes)
-  const fetchWorks = useCallback(async (isSilent = false) => {
+ const fetchWorks = useCallback(async (isSilent = false) => {
     try {
-      // Only show the big loading spinner if it's NOT a background socket refresh
       if (!isSilent) setLoading(true);
       
       const queryParams = new URLSearchParams();
@@ -41,7 +39,10 @@ const Dashboard = () => {
         if (value) queryParams.append(key, value);
       });
 
-      const res = await customFetch(`/api/work/search?${queryParams.toString()}`);
+      // 🔥 FIX: You must add credentials: 'include' here too!
+      const res = await customFetch(`/api/work/search?${queryParams.toString()}`, {
+        credentials: 'include' 
+      });
 
       const data = await res.json();
       if (data.success) {
@@ -56,7 +57,7 @@ const Dashboard = () => {
     } finally {
       if (!isSilent) setLoading(false);
     }
-  }, [filters]); 
+  }, [filters]);
 
   // 🔄 THE SMART REFRESH TRIGGER
   useEffect(() => {
