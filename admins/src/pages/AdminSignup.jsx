@@ -13,22 +13,22 @@ const AdminSignup = ({ onClose }) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
     try {
-      // Points to your secure backend route: router.post("/", verifyToken, verifySuperAdmin, createAdmin);
+      // 🔥 ADDED credentials: 'include' to the options object
       const res = await customFetch("/api/admin/", {
         method: "POST",
         body: JSON.stringify(form),
+        credentials: "include", 
       });
 
       const data = await res.json();
       if (data.success) {
         setMessage(`✅ ${form.role.toUpperCase()} created successfully!`);
-        // Reset form after success so you can create another one if needed
         setTimeout(() => {
           setForm({ username: "", email: "", password: "", role: "admin" });
           setMessage("");

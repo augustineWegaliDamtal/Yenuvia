@@ -19,7 +19,7 @@ export const verifyToken = (req, res, next) => {
       console.log("❌ BOUNCER SAYS: Token is fake or expired.");
       return next(errorHandler(403, "Session expired. Please log in again."));
     }
-
+ 
     try {
       const user = await User.findById(decoded.id).select("-password");
       
