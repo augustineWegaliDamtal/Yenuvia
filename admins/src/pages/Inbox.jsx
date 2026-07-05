@@ -11,7 +11,8 @@ import { useSocket } from "../context/SocketContext";
 import customFetch from "../utility/customFetch";
 
 const Inbox = () => {
-  
+  // 🔥 BRINGING THIS BACK: We need the ID for sockets and chat bubbles, just not the token!
+  const { currentUser } = useSelector((state) => state.user); 
   const { unreadMap } = useSelector((state) => state.adminNotifications);
   const dispatch = useDispatch();
   
@@ -68,12 +69,12 @@ const Inbox = () => {
   useEffect(() => { activeIdRef.current = selectedRecipient?._id; }, [selectedRecipient]);
   useEffect(() => { unreadMapRef.current = unreadMap; }, [unreadMap]);
 
-  // We wrap fetchData in useCallback so we can call it globally if needed
+  // 🔥 REMOVED THE TOKENS AND HEADERS HERE
   const fetchData = useCallback(async () => {
     try {
       const [rRes, mRes] = await Promise.all([
-        customFetch("/api/messages/recipients", { headers: { Authorization: `Bearer ${currentUser.token}` } }),
-        customFetch("/api/messages", { headers: { Authorization: `Bearer ${currentUser.token}` } })
+        customFetch("/api/messages/recipients"),
+        customFetch("/api/messages")
       ]);
       const rData = await rRes.json();
       const mData = await mRes.json();
@@ -86,7 +87,7 @@ const Inbox = () => {
     } catch (err) {
       console.error("Arena Link Offline");
     }
-  }, [currentUser.token]);
+  }, []); // 🔥 Removed currentUser.token from dependency array
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -109,13 +110,9 @@ const Inbox = () => {
       // 2. 🔥 THE FIX: AGGRESSIVELY BUMP SENDER TO THE TOP OF THE SIDEBAR
       if (sId !== myId) {
         setRecipients((prev) => {
-          // Remove them from wherever they currently are in the massive list
           const filteredList = prev.filter(r => String(r._id) !== sId);
-          // Find their full object, or use the incoming message's populated sender
           const existingUser = prev.find(r => String(r._id) === sId);
           const userToTop = existingUser || message.sender;
-          
-          // Put them at index 0
           return [userToTop, ...filteredList];
         });
       }
@@ -133,10 +130,8 @@ const Inbox = () => {
       }
     };
 
-    // 4. 🔥 THE FAILSAFE PAGER: If a totally unknown event happens, re-sync.
     const handleAdminPager = (alertData) => {
       console.log("🚨 [ADMIN PAGER TRIGGERED]:", alertData);
-      // Force a silent background sync just to be 100% sure the UI matches the DB
       fetchData();
     };
 
@@ -168,6 +163,7 @@ const Inbox = () => {
       fd.append("content", contentToSubmit);
       if (fileToSubmit) fd.append("media", fileToSubmit);
 
+      // 🔥 customFetch handles the auth invisibly now
       const res = await customFetch("/api/messages", {
         method: "POST",
         body: fd,
@@ -186,7 +182,7 @@ const Inbox = () => {
   };
 
   const activeConversation = useMemo(() => {
-    if (!selectedRecipient) return [];
+    if (!selectedRecipient || !currentUser?._id) return [];
     const selId = String(selectedRecipient._id);
     const curId = String(currentUser._id);
     return messages.filter(m => {
@@ -194,11 +190,9 @@ const Inbox = () => {
       const rId = String(m.recipient?._id || m.recipient);
       return (sId === selId && rId === curId) || (sId === curId && rId === selId);
     });
-  }, [messages, selectedRecipient, currentUser._id]);
+  }, [messages, selectedRecipient, currentUser?._id]);
 
   const sortedRecipients = useMemo(() => {
-    // We remove the unreadMap sorting here because the handleReceiveMessage 
-    // now physically moves active users to the top of the array!
     return recipients.filter(r => r.username.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [recipients, searchTerm]);
 
@@ -271,7 +265,7 @@ const Inbox = () => {
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-8 space-y-4 scrollbar-hide">
               {activeConversation.map((msg, i) => {
-                const isMe = String(msg.sender?._id || msg.sender) === String(currentUser._id);
+                const isMe = String(msg.sender?._id || msg.sender) === String(currentUser?._id);
                 
                 let mediaSrc = null;
                 if (msg.mediaUrl) {

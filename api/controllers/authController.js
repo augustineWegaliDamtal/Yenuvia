@@ -143,20 +143,14 @@ export const AdminSignup = async (req, res, next) => {
     const newAdmin = new User({ username, email, password: hashedPassword, role: "admin" });
     await newAdmin.save();
 
-    const token = jwt.sign(
-      { id: newAdmin._id, role: "admin" },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
     const { password: _, ...userData } = newAdmin._doc;
     userData.role = "admin";
 
+    // 🔥 FIX: Removed token generation entirely. Just return success!
     res.status(201).json({
       success: true,
       message: "Admin account created successfully",
       user: userData,
-      token,
     });
   } catch (error) {
     next(errorHandler(500, error.message));
@@ -178,7 +172,15 @@ export const AdminSignin = async (req, res, next) => {
     const { password: _, ...userData } = user._doc;
     userData.role = "admin";
 
-    res.status(200).json({ success: true, message: "Admin signin successful", user: userData, token });
+    // 🔥 FIX: Added the cookie packing logic here!
+    res
+      .cookie("access_token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      })
+      .status(200)
+      .json({ success: true, message: "Admin signin successful", user: userData });
   } catch (error) {
     next(errorHandler(500, error.message));
   }

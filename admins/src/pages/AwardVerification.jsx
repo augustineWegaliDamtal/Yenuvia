@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-
+import { useSelector } from "react-redux";
 import customFetch from "../utility/customFetch";
 
 const AwardVerification = () => {
   const [artists, setArtists] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+  const { currentUser } = useSelector((state) => state.admin);
   const [searchTerm, setSearchTerm] = useState("");
 
 

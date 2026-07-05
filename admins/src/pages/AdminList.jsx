@@ -5,8 +5,6 @@ import "react-toastify/dist/ReactToastify.css";
 import customFetch from "../utility/customFetch";
 
 const AdminList = () => {
-  
-  
   const [admins, setAdmins] = useState([]);
   const [counts, setCounts] = useState({ admins: 0, superadmins: 0, artists: 0 });
   const [search, setSearch] = useState("");
@@ -41,8 +39,10 @@ const AdminList = () => {
         setLoading(false);
       }
     };
-    if (currentUser?.token) fetchAdmins();
-  }, [currentUser?.token]);
+    
+    // 🔥 THE FIX: Just fetch immediately on mount. No token check needed!
+    fetchAdmins();
+  }, []); // 🔥 THE FIX: Empty dependency array
 
   // --- Update admin ---
   const updateAdmin = async (id, updateData) => {
@@ -68,7 +68,6 @@ const AdminList = () => {
     try {
       const res = await customFetch(`/api/admin/delete/${id}`, {
         method: "DELETE",
-        
       });
       const data = await res.json();
       if (data.success) {

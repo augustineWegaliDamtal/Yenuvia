@@ -1,6 +1,6 @@
 import React from 'react'
 import { useState } from 'react';
-
+import { useSelector } from 'react-redux';
 import customFetch from '../utility/customFetch';
 
 const SetChallengeForms = () => {
@@ -8,7 +8,7 @@ const SetChallengeForms = () => {
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-c
+const { currentUser } = useSelector((state) => state.admin);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

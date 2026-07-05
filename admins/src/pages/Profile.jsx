@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {  useDispatch } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { signinSuccess, signoutUserSuccess } from "../redux/user/userSlice";
@@ -8,7 +8,7 @@ import { User, Mail, Lock, LogOut, Trash2, Edit3, Save, X, Camera } from "lucide
 import customFetch from "../utility/customFetch";
 
 const Profile = () => {
-  
+  const { currentUser } = useSelector((state) => state.admin);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { id } = useParams();

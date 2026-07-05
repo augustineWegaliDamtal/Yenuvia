@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Routes, Route, NavLink } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { Shield } from "lucide-react"; 
 
@@ -16,7 +17,7 @@ import AdminDisputePanel from "../Component.jsx/AdminDisputePanel";
 
 
 const SuperAdminDashboard = () => {
-
+  const { currentUser } = useSelector((state) => state.admin);
   
   const [showAdminSignup, setShowAdminSignup] = useState(false);
 
