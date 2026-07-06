@@ -12,7 +12,7 @@ import customFetch from "../utility/customFetch";
 
 const Inbox = () => {
   // 🔥 BRINGING THIS BACK: We need the ID for sockets and chat bubbles, just not the token!
-  const { currentUser } = useSelector((state) => state.user); 
+  const { currentUser } = useSelector((state) => state.user)|| {}; 
   const { unreadMap } = useSelector((state) => state.adminNotifications);
   const dispatch = useDispatch();
   

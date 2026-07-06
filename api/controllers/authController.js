@@ -41,12 +41,14 @@ export const Signin = async (req, res, next) => {
     const { password: _, ...rest } = validUser._doc;
     rest.role = normalizedRole;
 
-    res
-      .cookie("access_token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      })
+    const isProduction = process.env.NODE_ENV === "production";
+
+res.cookie("access_token", token, {
+  httpOnly: true,
+  secure: isProduction ? true : false,
+  sameSite: isProduction ? "none" : "lax",
+  maxAge: 24 * 60 * 60 * 1000,
+})
       .status(200)
       .json({ success: true, user: rest, token });
   } catch (error) {
@@ -68,12 +70,15 @@ export const Google = async (req, res, next) => {
       );
       const { password, ...userData } = user._doc;
       userData.role = user.role.toLowerCase();
-      return res
-        .cookie("access_token", token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-        })
+      return 
+      const isProduction = process.env.NODE_ENV === "production";
+
+res.cookie("access_token", token, {
+  httpOnly: true,
+  secure: isProduction ? true : false,
+  sameSite: isProduction ? "none" : "lax",
+  maxAge: 24 * 60 * 60 * 1000,
+})
         .status(200)
         .json({ success: true, user: userData, token });
     }
@@ -101,12 +106,15 @@ export const Google = async (req, res, next) => {
     const { password, ...userData } = newUser._doc;
     userData.role = newUser.role.toLowerCase();
 
-    return res
-      .cookie("access_token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      })
+    return 
+    const isProduction = process.env.NODE_ENV === "production";
+
+res.cookie("access_token", token, {
+  httpOnly: true,
+  secure: isProduction ? true : false,
+  sameSite: isProduction ? "none" : "lax",
+  maxAge: 24 * 60 * 60 * 1000,
+})
       .status(200)
       .json({ success: true, user: userData, token });
   } catch (error) {
@@ -117,11 +125,14 @@ export const Google = async (req, res, next) => {
 // -------------------- Signout --------------------
 export const signOut = async (req, res, next) => {
   try {
-    res.clearCookie("access_token", {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-    });
+    const isProduction = process.env.NODE_ENV === "production";
+
+res.cookie("access_token", token, {
+  httpOnly: true,
+  secure: isProduction ? true : false,
+  sameSite: isProduction ? "none" : "lax",
+  maxAge: 24 * 60 * 60 * 1000,
+})
     res.status(200).json({ success: true, message: "User signed out successfully" });
   } catch (error) {
     next(errorHandler(500, error.message));
@@ -172,15 +183,14 @@ export const AdminSignin = async (req, res, next) => {
     const { password: _, ...userData } = user._doc;
     userData.role = "admin";
 
-    // 🔥 FIX: Added the cookie packing logic here!
-    res
-      .cookie("access_token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      })
-      .status(200)
-      .json({ success: true, message: "Admin signin successful", user: userData });
+    const isProduction = process.env.NODE_ENV === "production";
+
+res.cookie("access_token", token, {
+  httpOnly: true,
+  secure: isProduction ? true : false,
+  sameSite: isProduction ? "none" : "lax",
+  maxAge: 24 * 60 * 60 * 1000,
+}).status(200).json({ success: true, message: "Admin signin successful", user: userData });
   } catch (error) {
     next(errorHandler(500, error.message));
   }
@@ -221,13 +231,14 @@ console.log("Issued JWT payload:", decoded);
     const { password: _, ...userData } = user._doc;
     userData.role = "superadmin"; // explicitly set
 
-    // Send response
-   res
-      .cookie("access_token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      })
+    const isProduction = process.env.NODE_ENV === "production";
+
+res.cookie("access_token", token, {
+  httpOnly: true,
+  secure: isProduction ? true : false,
+  sameSite: isProduction ? "none" : "lax",
+  maxAge: 24 * 60 * 60 * 1000,
+})
       .status(200)
       .json({
         success: true,
