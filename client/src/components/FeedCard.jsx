@@ -38,17 +38,18 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard }) => {
   const [localIsLiked, setLocalIsLiked] = useState(post.likedBy?.includes(activeUser?._id));
   const [localLikeCount, setLocalLikeCount] = useState(post.likes || 0);
   const [localShareCount, setLocalShareCount] = useState(post.shares || 0);
-  const [commentCount, setCommentCount] = useState(post.commentsList?.length || 0);
+  const [localComments, setLocalComments] = useState(post.commentsList || []);
 
   // 🔥 FIX: Keep local state synced if the server updates the parent post object
-  useEffect(() => {
-    setLocalIsLiked(post.likedBy?.includes(activeUser?._id));
-    setLocalLikeCount(post.likes || 0);
-    setLocalShareCount(post.shares || 0);
-    if (post.commentsList?.length !== undefined) {
-      setCommentCount(post.commentsList.length);
-    }
-  }, [post.likedBy, post.likes, post.shares, post.commentsList, activeUser]);
+  // 🔥 Keep local state synced if the server updates the parent post object
+useEffect(() => {
+  setLocalIsLiked(post.likedBy?.includes(activeUser?._id));
+  setLocalLikeCount(post.likes || 0);
+  setLocalShareCount(post.shares || 0);
+  
+  // ✅ Update this line to store the array instead of the length
+  setLocalComments(post.commentsList || []); 
+}, [post.likedBy, post.likes, post.shares, post.commentsList, activeUser]);
 
   // Cloudinary Optimization Engine
   const slides = useMemo(() => {
@@ -363,11 +364,12 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard }) => {
         </div>
         
         <div className="flex flex-col items-center gap-1">
-          <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowComments(true); }} className="p-1 active:scale-90 transition-transform drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
-            <MessageCircle size={30} fill="white" className="text-white" />
-          </button>
-          <span className="text-white text-[11px] font-bold drop-shadow-md">{commentCount || "0"}</span>
-        </div>
+  <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowComments(true); }} className="p-1 active:scale-90 transition-transform drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+    <MessageCircle size={30} fill="white" className="text-white" />
+  </button>
+  {/* ✅ CHANGE THIS to render the array length */}
+  <span className="text-white text-[11px] font-bold drop-shadow-md">{localComments.length}</span>
+</div>
         
         <div className="flex flex-col items-center gap-1">
           <button type="button" onClick={handleShareClick} className="p-1 active:scale-90 transition-transform drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
@@ -449,7 +451,13 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard }) => {
         </div>
       </div>
 
-      {showComments && <CommentPanel post={post} onClose={() => setShowComments(false)} onCommentUpdate={(newCount) => setCommentCount(newCount)} />}
+      {showComments && (
+  <CommentPanel 
+    post={{ ...post, commentsList: localComments }} // Passes forward the live local edits
+    onClose={() => setShowComments(false)} 
+    onCommentUpdate={(updatedCommentsArray) => setLocalComments(updatedCommentsArray)} 
+  />
+)}
       {showIdModal && <GhanaCardModal onClose={() => setShowIdModal(false)} onSuccess={() => navigate(`/work/${post._id}`)} />}
     </li>
   );

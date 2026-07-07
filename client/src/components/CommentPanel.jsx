@@ -36,8 +36,9 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
         setComments(data.data.commentsList);
         setNewComment(""); 
         
-        // ✅ INSTANT UI UPDATE: Tell the FeedCard to tick the number up!
-        if (onCommentUpdate) onCommentUpdate(data.data.commentsList.length);
+        // 🔥 THE FIX: Pass the FULL array back to the parent, not just the length!
+        // The parent feed component needs to update its state with this new array.
+        if (onCommentUpdate) onCommentUpdate(data.data.commentsList);
       } else {
         console.error("Server rejected comment:", data.message);
       }
@@ -62,8 +63,8 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
         setComments((prev) => {
           const newComments = prev.filter((c) => c._id !== commentId);
           
-          // ✅ INSTANT UI UPDATE: Tell the FeedCard to tick the number down!
-          if (onCommentUpdate) onCommentUpdate(newComments.length);
+          // 🔥 THE FIX: Pass the FULL filtered array back to the parent!
+          if (onCommentUpdate) onCommentUpdate(newComments);
           
           return newComments;
         });

@@ -8,7 +8,8 @@ export const getSchools = async (req, res, next) => {
   try {
     const posts = await Work.find({ category: "school", status: { $in: ["approved", "billboard"] } })
       .sort({ createdAt: -1 })
-      .populate("artistId", "username avatar verified school");
+      .populate("artistId", "username avatar verified school")
+      .populate("commentsList.user", "username avatar");
     res.status(200).json({ success: true, posts });
   } catch (err) { next(err); }
 };
@@ -30,7 +31,8 @@ export const getProfessionals = async (req, res, next) => {
 
     const rawPosts = await Work.find(query)
       .sort({ createdAt: -1 })
-      .populate("artistId", "username avatar verified school"); // Added 'school' just in case
+      .populate("artistId", "username avatar verified school")
+      .populate("commentsList.user", "username avatar");
 
     // 4. Flatten the artistName so the React Grid doesn't say @undefined
     const posts = rawPosts.map(post => ({
@@ -49,7 +51,7 @@ export const getForYou = async (req, res, next) => {
     const works = await Work.find({
       status: { $in: ["approved", "billboard"] },
       createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
-    }).populate("artistId", "username avatar verified school");
+    }).populate("artistId", "username avatar verified school").populate("commentsList.user", "username avatar");
 
     const sortedWorks = works.map((work) => {
         const now = new Date();
