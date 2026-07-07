@@ -29,7 +29,11 @@ export const UploadProvider = ({ children }) => {
           try {
             const isVideo = file.type.includes('video') || file.name.match(/\.(mp4|webm|ogg|mov)$/i);
             const resourceType = isVideo ? "video" : "image";
-            const CLOUD_NAME = "dhrxqndri"; 
+            
+            // 🛠️ THE FIX: Dynamically pull your new active account from the frontend .env
+            const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+            const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+            
             const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`;
 
             // 🔥 THE CHUNKING MAGIC: Slice massive videos into 20MB bursts
@@ -47,7 +51,9 @@ export const UploadProvider = ({ children }) => {
 
               const uploadData = new FormData();
               uploadData.append("file", chunk);
-              uploadData.append("upload_preset", "arena_uploads");
+              
+              // 🛠️ THE FIX: Apply the dynamic variables here
+              uploadData.append("upload_preset", UPLOAD_PRESET);
               uploadData.append("cloud_name", CLOUD_NAME);
 
               const headers = {

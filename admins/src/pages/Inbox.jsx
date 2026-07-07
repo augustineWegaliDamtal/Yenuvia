@@ -11,9 +11,8 @@ import { useSocket } from "../context/SocketContext";
 import customFetch from "../utility/customFetch";
 
 const Inbox = () => {
-  // 🔥 BRINGING THIS BACK: We need the ID for sockets and chat bubbles, just not the token!
-  const { currentUser } = useSelector((state) => state.user)|| {}; 
-  const { unreadMap } = useSelector((state) => state.adminNotifications);
+const currentUser = useSelector((state) => state.admin?.currentUser) || {}; 
+  const { unreadMap } = useSelector((state) => state.adminNotifications) || { unreadMap: {} };
   const dispatch = useDispatch();
   
   const [messages, setMessages] = useState([]);
@@ -173,7 +172,15 @@ const Inbox = () => {
       if (data.success) {
         setMessages((prev) => {
           if (prev.some(m => m._id === data.message._id)) return prev;
-          return [...prev, data.message];
+          
+          // 🛠️ THE FIX: Guarantee the IDs exist so the activeConversation filter doesn't hide it
+          const completeMessage = {
+            ...data.message,
+            sender: data.message.sender || currentUser._id,
+            recipient: data.message.recipient || selectedRecipient._id
+          };
+
+          return [...prev, completeMessage];
         });
       }
     } catch (err) {
@@ -197,7 +204,10 @@ const Inbox = () => {
   }, [recipients, searchTerm]);
 
   const isPreviewVideo = file && (file.type.includes('video') || file.name.match(/\.(mp4|webm|ogg|mov)$/i));
-
+    console.log("1. Current User ID:", currentUser?._id);
+  console.log("2. Selected Recipient ID:", selectedRecipient?._id);
+  console.log("3. Raw DB Messages:", messages);
+  console.log("4. Filtered Conversation:", activeConversation)
   return (
     <div className="flex h-screen bg-[#0a0a0a] text-white overflow-hidden pb-32"> 
       

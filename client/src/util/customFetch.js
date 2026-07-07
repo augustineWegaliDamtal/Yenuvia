@@ -1,41 +1,22 @@
-import { getToken } from './tokenManager'; 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 
 const customFetch = async (endpoint, options = {}) => {
-  const baseURL = import.meta.env.VITE_BACKEND_URL || '';
-  const url = `${baseURL}${endpoint}`;
+  options.headers = options.headers || {};
 
-  // 1. Grab the token and clean it up immediately
-  const rawToken = getToken('artistUser') || getToken('superadminUser') || getToken('adminUser');
-  const token = (rawToken && rawToken !== 'null' && rawToken !== 'undefined') ? rawToken : null;
+  // 🛡️ CRITICAL: Tell the browser to include the HttpOnly auth cookie automatically
+  options.credentials = "include";
 
-  // 2. Clone headers safely
-  const headers = { ...options.headers };
-
-  // 3. Always attach the Authorization header if a token exists
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  // Automatically set Content-Type for JSON payloads (without breaking multipart FormData for images/videos)
+  if (options.body && !(options.body instanceof FormData)) {
+    if (!options.headers["Content-Type"]) {
+      options.headers["Content-Type"] = "application/json";
+    }
   }
 
-  // 4. Safely handle FormData (Files) vs JSON
-  // If the body is FormData, delete the Content-Type header to allow multipart/form-data boundary
-  if (options.body instanceof FormData) {
-    delete headers['Content-Type'];
-  } else if (!headers['Content-Type']) {
-    // Default to JSON only if it's not a multipart upload
-    headers['Content-Type'] = 'application/json';
-  }
-
-  // 5. Execute fetch
-  try {
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
-    return response;
-  } catch (error) {
-    console.error("CustomFetch Error:", error);
-    throw error;
-  }
+  const url = endpoint.startsWith("http") ? endpoint : `${BACKEND_URL}${endpoint}`;
+  
+  const response = await fetch(url, options);
+  return response;
 };
 
 export default customFetch;
