@@ -194,6 +194,17 @@ const ForYou = ({ activeTab }) => {
     }
   }, [activeUser, dispatch, fetchPosts]);
 
+  const handleCommentGlobalUpdate = useCallback((postId, updatedCommentsArray) => {
+  const targetPost = feedPostsRef.current.find((p) => p._id === postId);
+  if (!targetPost) return;
+
+  // Dispatch directly to your existing Redux action to update the global cache
+  dispatch(UPDATE_SINGLE_POST({
+    ...targetPost,
+    commentsList: updatedCommentsArray
+  }));
+}, [dispatch]);
+
   // Pull down interaction triggers
   const handleTouchStart = (e) => {
     touchStartRef.current = e.touches[0].clientY;
@@ -294,6 +305,7 @@ const ForYou = ({ activeTab }) => {
                   leaderboard={leaderboard} 
                   handleLike={handleLike}
                   handleShare={(postToShare) => setSharingPost(postToShare)} 
+                  onCommentGlobalUpdate={handleCommentGlobalUpdate}
                 />
               </div>
             );

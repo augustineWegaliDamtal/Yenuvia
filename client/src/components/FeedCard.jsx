@@ -10,7 +10,7 @@ import { toggleGlobalMute } from "../redux/users/settingsSlice";
 import GhanaCardModal from "./GhanaCardModal"; 
 import customFetch from "../util/customFetch.js";
 
-const FeedCard = ({ post, handleLike, handleShare, leaderboard }) => {
+const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalUpdate }) => {
   const [showComments, setShowComments] = useState(false);
   const [donationAmount, setDonationAmount] = useState("");
   const [isVideoBuffering, setIsVideoBuffering] = useState(true);
@@ -453,9 +453,17 @@ useEffect(() => {
 
       {showComments && (
   <CommentPanel 
-    post={{ ...post, commentsList: localComments }} // Passes forward the live local edits
+    post={{ ...post, commentsList: localComments }} 
     onClose={() => setShowComments(false)} 
-    onCommentUpdate={(updatedCommentsArray) => setLocalComments(updatedCommentsArray)} 
+    onCommentUpdate={(updatedCommentsArray) => {
+      // Update local card state instantly
+      setLocalComments(updatedCommentsArray);
+      
+      // 🔥 Push the data up to Redux so Virtuoso can't vaporize it on scroll!
+      if (onCommentGlobalUpdate) {
+        onCommentGlobalUpdate(post._id, updatedCommentsArray);
+      }
+    }} 
   />
 )}
       {showIdModal && <GhanaCardModal onClose={() => setShowIdModal(false)} onSuccess={() => navigate(`/work/${post._id}`)} />}
@@ -467,7 +475,8 @@ export default React.memo(FeedCard, (prevProps, nextProps) => {
   return (
     prevProps.post._id === nextProps.post._id &&
     prevProps.post.likes === nextProps.post.likes &&
-    prevProps.post.commentsList?.length === nextProps.post.commentsList?.length &&
-    prevProps.post.shares === nextProps.post.shares
+    prevProps.post.shares === nextProps.post.shares &&
+    // 🔥 FIX: Stringify the array to catch inner data structure variations (like string ID vs populated object)
+    JSON.stringify(prevProps.post.commentsList) === JSON.stringify(nextProps.post.commentsList)
   );
 });

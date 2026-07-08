@@ -30,34 +30,27 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
     }
   }, [socket, currentUserArtist?._id]);
 
-  // 🔌 2. REAL-TIME SOCKET ENGINE
+ // 📩 3. HISTORY FETCH (UPDATED)
   useEffect(() => {
-    if (!socket || !currentUserArtist?._id) return;
-
-    const handleReceiveMessage = (newMessage) => {
-      setMessages((prev) => {
-        if (prev.find((m) => m._id === newMessage._id)) return prev;
-        
-        const optimisticMatch = prev.find(m => 
-          m.isOptimistic && 
-          m.content === newMessage.content && 
-          String(m.recipient?._id || m.recipient) === String(newMessage.recipient?._id || newMessage.recipient)
-        );
-
-        if (optimisticMatch) {
-          return prev.map(m => m._id === optimisticMatch._id ? newMessage : m);
+    const fetchMessages = async () => {
+      try {
+        const res = await customFetch("/api/messages", {
+          headers: { Authorization: `Bearer ${currentUserArtist?.token}` },
+        });
+        const data = await res.json();
+        if (data.success) {
+          const sorted = data.messages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+          setMessages(sorted);
         }
-
-        return [...prev, newMessage];
-      });
+      } catch (err) { console.error("Inbox offline"); }
     };
-
-    socket.on("receiveMessage", handleReceiveMessage);
-
-    return () => {
-      socket.off("receiveMessage", handleReceiveMessage);
-    };
-  }, [socket, currentUserArtist?._id]);
+    
+    if (currentUserArtist?.token) {
+      fetchMessages();
+      // 🚨 REMOVED: dispatch(CLEAR_UNREAD_MESSAGES());
+      // We no longer instantly wipe the badge before the user sees it.
+    }
+  }, [currentUserArtist, dispatch]);
 
   // 📩 3. HISTORY FETCH
   useEffect(() => {
@@ -103,7 +96,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
     }
   }, [groupedThreads, selectedThreadKey]);
 
-  // 🚀 6. SWIFT SEND ACTION (Optimistic UI)
+// 🚀 6. SWIFT SEND ACTION (UPDATED)
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!formData.content.trim() && !file) return;
@@ -159,7 +152,18 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
       const data = await res.json();
       if (data.success) {
         setMessages((prev) => 
-          prev.map(m => m._id === optimisticId ? data.message : m)
+          prev.map(m => {
+            if (m._id === optimisticId) {
+              // 🔥 THE FIX: Guarantee the sender/recipient data isn't lost during the swap
+              // This prevents the grouping function from dropping the message
+              return {
+                ...data.message,
+                sender: data.message.sender || currentUserArtist,
+                recipient: data.message.recipient || partnerId
+              };
+            }
+            return m;
+          })
         );
       }
     } catch (err) {

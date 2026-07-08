@@ -48,23 +48,39 @@ export const getProfessionals = async (req, res, next) => {
 
 export const getForYou = async (req, res, next) => {
   try {
+    // 1. Capture incoming pagination boundaries from the frontend query
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // 2. 🔥 FIX: Added .lean() to strip out Mongoose internal instances 
+    // This turns everything into pristine, ultra-lightweight, pure JSON objects
     const works = await Work.find({
       status: { $in: ["approved", "billboard"] },
       createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
-    }).populate("artistId", "username avatar verified school").populate("commentsList.user", "username avatar");
+    })
+    .populate("artistId", "username avatar verified school")
+    .populate("commentsList.user", "username avatar")
+    .lean(); 
 
+    // 3. Score and sort the clean JSON objects safely
     const sortedWorks = works.map((work) => {
-        const now = new Date();
-        const ageInHours = (now - new Date(work.createdAt)) / (1000 * 60 * 60);
-        const engagement = (work.likes || 0) + (work.comments || 0) * 2 + (work.shares || 0);
-        const score = engagement / Math.pow(ageInHours + 2, 1.5);
-        return { ...work._doc, trendingScore: score };
-      }).sort((a, b) => b.trendingScore - a.trendingScore);
+      const now = new Date();
+      const ageInHours = (now - new Date(work.createdAt)) / (1000 * 60 * 60);
+      const engagement = (work.likes || 0) + (work.comments || 0) * 2 + (work.shares || 0);
+      const score = engagement / Math.pow(ageInHours + 2, 1.5);
+      
+      return { ...work, trendingScore: score };
+    }).sort((a, b) => b.trendingScore - a.trendingScore);
 
-    res.status(200).json({ success: true, posts: sortedWorks.slice(0, 30) });
-  } catch (error) { next(error); }
+    // 4. 🔥 FIX: Apply true dynamic sliding window pagination
+    const paginatedWorks = sortedWorks.slice(skip, skip + limit);
+
+    res.status(200).json({ success: true, posts: paginatedWorks });
+  } catch (error) { 
+    next(error); 
+  }
 };
-
 export const getBillboard = async (req, res, next) => {
   try {
     const { mode, artistId } = req.query;
@@ -189,7 +205,7 @@ export const commentPost = async (req, res, next) => {
 
     const updatedPost = await Work.findById(req.params.id)
       .populate("artistId", "username avatar verified")
-      .populate("commentsList.user", "username avatar");
+      .populate("commentsList.user", "username avatar verified");
 
     res.status(200).json({ success: true, data: updatedPost });
   } catch (err) { next(err); }
