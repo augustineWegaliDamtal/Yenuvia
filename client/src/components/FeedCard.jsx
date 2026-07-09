@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom"; 
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, MessageCircle, Share2, Volume2, VolumeX, Loader2, ShoppingBag, User, Download, Gift, Play } from "lucide-react";
+import { Heart, MessageCircle, Share2, Volume2, VolumeX, Loader2, ShoppingBag, User, Download, Gift, Play,Plus, Check } from "lucide-react";
 import { SET_LIVE_ALERT } from "../redux/users/notificationsSlice"; 
 import VerifiedBadge from "./VerifiedBadge";
 import CommentPanel from "./CommentPanel";
@@ -40,6 +40,11 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalU
   const [localShareCount, setLocalShareCount] = useState(post.shares || 0);
   const [localComments, setLocalComments] = useState(post.commentsList || []);
 
+
+  // Check if the logged-in artist's ID is in the post owner's followers array
+  const [isFollowing, setIsFollowing] = useState(
+    post.artistId?.followers?.includes(activeUser?._id)
+  );
   // 🔥 FIX: Keep local state synced if the server updates the parent post object
   // 🔥 Keep local state synced if the server updates the parent post object
 useEffect(() => {
@@ -208,15 +213,39 @@ useEffect(() => {
     handleLike(post._id);
   };
   
-  const handleShareClick = (e) => {
+  const handleShareClick = async (e) => {
     e?.preventDefault(); 
     e?.stopPropagation();
 
-    // 🔥 FIX: Instant visual update
-    setLocalShareCount((prev) => prev + 1);
-
-    if (handleShare) handleShare(post); 
-    customFetch(`/api/work/${post._id}/share`, { method: "PUT" }).catch(() => {}); 
+    try {
+      // 1. Check if the device supports native mobile sharing
+      if (navigator.share) {
+        
+        // 2. Open the native share menu AND WAIT
+        await navigator.share({
+          title: post.artistName || post.artistId?.username || "Check out this art!",
+          text: post.description,
+          url: `${window.location.origin}/work/${post._id}`,
+        });
+        
+        // 3. 🔥 THIS ONLY RUNS IF THEY ACTUALLY COMPLETED THE SHARE
+        // If they hit "Cancel", the code immediately jumps to the catch block below.
+        setLocalShareCount((prev) => prev + 1);
+        if (handleShare) handleShare(post); 
+        customFetch(`/api/work/${post._id}/share`, { method: "PUT" }).catch(() => {}); 
+        
+      } else {
+        // Fallback: If they are on a desktop browser that doesn't support the native share menu,
+        // just count it normally or copy the link to their clipboard.
+        setLocalShareCount((prev) => prev + 1);
+        if (handleShare) handleShare(post); 
+        customFetch(`/api/work/${post._id}/share`, { method: "PUT" }).catch(() => {});
+      }
+    } catch (error) {
+      // The user opened the share menu but hit "Close/Cancel". 
+      // We do absolutely nothing here. The count does not go up!
+      console.log("Share cancelled by user");
+    }
   };
 
   // 🔥 NEW: Profile click handler protecting guests from visiting profile pages
@@ -247,6 +276,32 @@ useEffect(() => {
     lastTap.current = now;
   }, [localIsLiked, isPlaying, activeSlide]); 
 
+  const handleQuickFollow = async (e) => {
+    e.stopPropagation(); // Crucial: Stops the click from triggering the main feed card
+    
+    if (!activeUser) return navigate('/signin');
+
+    // Optimistic UI update: Toggle the button instantly so it feels fast
+    setIsFollowing(!isFollowing);
+
+    try {
+      const res = await customFetch(`/api/user/follow/${post.artistId._id}`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${activeUser.token}` }
+      });
+      
+      const data = await res.json();
+      
+      // If the backend fails, revert the button back to its previous state
+      if (!data.success) {
+        setIsFollowing(isFollowing);
+      }
+    } catch (err) {
+      console.error("Follow failed", err);
+      setIsFollowing(isFollowing); // Revert on error
+    }
+  };
+
   return (
     <li ref={cardRef} className="relative bg-black h-[100dvh] w-full snap-start shrink-0 overflow-hidden flex flex-col justify-between pb-[env(safe-area-inset-bottom)]">
       
@@ -276,7 +331,7 @@ useEffect(() => {
                     onCanPlay={() => setIsVideoBuffering(false)}
                     onWaiting={() => setIsVideoBuffering(true)}
                     onPlaying={() => setIsVideoBuffering(false)}
-                    className="w-full h-full object-contain object-top bg-black pointer-events-none " 
+                    className="w-full h-full object-contain object-center bg-black pointer-events-none " 
                     style={{ transform: "translateZ(0)", willChange: "transform" }}
                   />
                 </div>
@@ -285,7 +340,7 @@ useEffect(() => {
                   src={file.url} 
                   loading="lazy" 
                   draggable="false" 
-                  className="w-full h-full object-contain object-top bg-black pointer-events-auto" 
+                  className="w-full h-full object-contain object-center bg-black pointer-events-auto" 
                   alt="Art" 
                 />
               )}
@@ -338,19 +393,38 @@ useEffect(() => {
       )}
 
       <div className="absolute top-[env(safe-area-inset-top,20px)] left-4 z-40 mt-5 pointer-events-auto profile-trigger">
-        {/* 🔥 FIX: Replaced Link with protected div */}
-        <div onClick={handleProfileClick} className="block active:scale-90 transition-transform relative cursor-pointer">
-          <div className="w-11 h-11 rounded-full border border-white/40 p-[2px] bg-black/40 backdrop-blur-sm shadow-xl overflow-hidden">
-            {post.artistId?.avatar ? (
-              <img src={post.artistId.avatar} className="w-full h-full object-cover rounded-full" alt="avatar" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-zinc-400"><User size={20}/></div>
-            )}
+        <div className="relative">
+          {/* The Profile Picture (Clicking this goes to profile) */}
+          <div onClick={handleProfileClick} className="block active:scale-90 transition-transform cursor-pointer">
+            <div className="w-11 h-11 rounded-full border border-white/40 p-[2px] bg-black/40 backdrop-blur-sm shadow-xl overflow-hidden">
+              {post.artistId?.avatar ? (
+                <img src={post.artistId.avatar} className="w-full h-full object-cover rounded-full" alt="avatar" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-zinc-400"><User size={20}/></div>
+              )}
+            </div>
           </div>
+
+          {/* The Verified Badge (Bottom Right) */}
           {post.artistId?.verified && (
-            <div className="absolute -bottom-1 -right-1 z-50 bg-black rounded-full p-[2px] shadow-lg">
+            <div className="absolute -bottom-1 -right-1 z-40 bg-black rounded-full p-[2px] shadow-lg pointer-events-none">
               <VerifiedBadge size={14} color="gold" />
             </div>
+          )}
+
+          {/* 🔥 THE NEW FOLLOW BUTTON (Bottom Center) 🔥 */}
+          {activeUser?._id !== (post.artistId?._id || post.artistId) && (
+            <button 
+              type="button"
+              onClick={handleQuickFollow}
+              className={`absolute -bottom-3 left-1/2 -translate-x-1/2 z-50 w-[22px] h-[22px] rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-90 ${
+                isFollowing 
+                  ? 'bg-zinc-700 text-white border border-white/20' 
+                  : 'bg-yellow-500 text-black border-2 border-black'
+              }`}
+            >
+              {isFollowing ? <Check size={12} strokeWidth={4} /> : <Plus size={12} strokeWidth={4} />}
+            </button>
           )}
         </div>
       </div>

@@ -6,17 +6,38 @@ import { errorHandler } from "../utils/error.js";
 // -------------------- Artist Signup --------------------
 export const Signup = async (req, res, next) => {
   const { username, email, password } = req.body;
+
+  // 1. Validation check before hitting the DB
+  if (!username || !email || !password) {
+    return res.status(400).json({ 
+      success: false, 
+      message: "Please fill in all fields (username, email, and password)." 
+    });
+  }
+
   try {
     const hashedPassword = bcryptjs.hashSync(password, 10);
     const newUser = new User({
       username,
       email,
       password: hashedPassword,
-      role: "artist", // explicitly set
+      role: "artist", // explicitly set for Yenuvia
     });
+
     await newUser.save();
     res.status(201).json({ success: true, message: "Artist created successfully" });
+    
   } catch (error) {
+    // 2. Catch MongoDB duplicate key error (e.g., email or username already taken)
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      return res.status(409).json({ 
+        success: false, 
+        message: `That ${field} is already registered on Yenuvia.` 
+      });
+    }
+
+    // 3. Pass off any other unexpected bugs to your global error middleware
     next(errorHandler(500, error.message));
   }
 };
@@ -127,12 +148,12 @@ export const signOut = async (req, res, next) => {
   try {
     const isProduction = process.env.NODE_ENV === "production";
 
-res.cookie("access_token", token, {
-  httpOnly: true,
-  secure: isProduction ? true : false,
-  sameSite: isProduction ? "none" : "lax",
-  maxAge: 24 * 60 * 60 * 1000,
-})
+    res.clearCookie("access_token", {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+    });
+
     res.status(200).json({ success: true, message: "User signed out successfully" });
   } catch (error) {
     next(errorHandler(500, error.message));
