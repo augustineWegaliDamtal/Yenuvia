@@ -14,7 +14,7 @@ const customFetch = async (endpoint, options = {}) => {
   }
 
   const url = endpoint.startsWith("http") ? endpoint : `${BACKEND_URL}${endpoint}`;
-  
+  console.log("🚀 Attempting to fetch:", url);
   const response = await fetch(url, options);
   return response;
 };

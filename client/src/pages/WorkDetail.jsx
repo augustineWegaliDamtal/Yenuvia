@@ -12,6 +12,7 @@ import {
   Info
 } from "lucide-react";
 import CheckoutModal from "./CheckoutModal";
+import customFetch from "../util/customFetch";
 
 const WorkDetail = () => {
   const { id } = useParams();
@@ -25,7 +26,7 @@ const WorkDetail = () => {
       try {
         setLoading(true);
         // Hits Zone 6 of your Routes
-        const res = await fetch(`/api/work/${id}`);
+        const res = await customFetch(`/api/work/${id}`);
         const data = await res.json();
         
         if (data.success) {
