@@ -31,7 +31,7 @@ const BottomNav = () => {
 
   // --- CONFIGURATION ---
   const navItems = [
-    { label: "Arena", icon: <FaHome />, path: "/home" },
+    { label: "Yenuvia", icon: <FaHome />, path: "/home" },
     
     (isAdmin || isSuperAdmin) && { 
       label: "Ops", 

@@ -109,7 +109,7 @@ export const releaseFunds = async (amountInGHS, recipientCode, orderId) => {
       source: "balance", 
       amount: Math.round(amountInGHS * 100),
       recipient: recipientCode,
-      reason: `Arena Payout for Order ${orderId}`
+      reason: `Yenuvia Payout for Order ${orderId}`
     })
   });
   return await response.json();

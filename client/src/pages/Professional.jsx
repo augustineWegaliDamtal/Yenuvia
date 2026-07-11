@@ -131,7 +131,7 @@ const Professional = () => {
         </div>
       ) : posts.length === 0 ? (
         <p className="text-center text-gray-600 font-bold uppercase text-xs italic py-20">
-          The Professional Arena is waiting for talent...
+          Yenuvia is waiting for talent...
         </p>
       ) : viewMode === "grid" ? (
         

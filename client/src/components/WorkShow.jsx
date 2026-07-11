@@ -30,7 +30,7 @@ const WorkShow = ({ userId, isOwner, activeTab }) => {
       }
     } catch (err) {
       console.error(err);
-      setError("Arena Link Offline. Check your connection.");
+      setError("Yenuvia Link Offline. Check your connection.");
     } finally {
       setLoading(false);
     }

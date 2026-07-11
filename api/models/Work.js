@@ -38,7 +38,7 @@ const WorkSchema = new mongoose.Schema(
       }
     },
 
-    // 🚀 THE ARENA SHOWROOM (Marketplace Additions)
+    
     isForSale: { type: Boolean, default: false, index: true },
     price: { type: Number, default: 0 },
     isSold: { type: Boolean, default: false },

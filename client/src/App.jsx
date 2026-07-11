@@ -33,7 +33,7 @@ const ArenaLoader = () => (
   <div className="h-screen bg-black flex flex-col items-center justify-center">
     <div className="w-12 h-12 border-t-2 border-b-2 border-yellow-500 rounded-full animate-spin mb-4" />
     <p className="text-yellow-500 font-black italic uppercase text-[10px] tracking-[0.3em] animate-pulse">
-      Arena Syncing...
+      Yenuvia Syncing...
     </p>
   </div>
 );

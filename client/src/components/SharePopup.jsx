@@ -21,10 +21,10 @@ const SharePopup = ({ post, onClose }) => {
   const shareUrl = `${window.location.origin}/post/${post._id}`;
 
   // 🧠 THE VIRAL PAYLOAD ENGINE
-  const schoolName = post.artistId?.school || "The Arena";
-  const artistName = post.artistName || post.artistId?.username || "an Arena Creator";
+  const schoolName = post.artistId?.school || "Yenuvia";
+  const artistName = post.artistName || post.artistId?.username || "an Yenuvia Creator";
   
-  const viralText = `🔥 ${schoolName.toUpperCase()} is taking over the Arena! Check out this masterpiece by @${artistName}. Tap the link to vote and secure points! 👇`;
+  const viralText = `🔥 ${schoolName.toUpperCase()} is taking over Yenuvia! Check out this masterpiece by @${artistName}. Tap the link to vote and secure points! 👇`;
 
   // ✅ SAFE MEDIA CHECK (Firebase compatible)
   const mainMediaUrl = post.mediaUrls?.[0] || post.mediaUrl || "/default-placeholder.png";

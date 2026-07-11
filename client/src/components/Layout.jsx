@@ -38,7 +38,7 @@ const Layout = () => {
         verified: true 
       }));
       navigate(location.pathname, { replace: true });
-      console.log("Arena Pro Synced! Card should now be hidden.");
+      console.log("Yenuvia Pro Synced! Card should now be hidden.");
     }
   }, [location.search, currentUserArtist, dispatch, navigate]);
 

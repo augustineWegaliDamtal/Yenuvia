@@ -79,7 +79,7 @@ const Vault = () => {
 
                   {/* Details */}
                   <div>
-                    <h4 className="text-white font-bold text-sm line-clamp-1">{entry.matchId?.directive || "Arena Directive"}</h4>
+                    <h4 className="text-white font-bold text-sm line-clamp-1">{entry.matchId?.directive || "Yenuvia Directive"}</h4>
                     <p className="text-[9px] font-black uppercase tracking-widest mt-1 flex items-center gap-2">
                       <span className="text-zinc-500">Pledged:</span>
                       <span className="text-white">GHS {entry.amount}</span>

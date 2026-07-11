@@ -68,7 +68,7 @@ const userSchema = new mongoose.Schema(
 
   // ... all your existing code (username, school, followers, stats, etc.)
 
-    // 🏆 ARENA STATS (The Dopamine Engine)
+ 
     totalHypes: { 
       type: Number, 
       default: 0 

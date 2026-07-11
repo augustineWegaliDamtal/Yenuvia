@@ -84,7 +84,7 @@ const currentUser = useSelector((state) => state.admin?.currentUser) || {};
         setMessages(sorted);
       }
     } catch (err) {
-      console.error("Arena Link Offline");
+      console.error("Yenuvia Link Offline");
     }
   }, []); // 🔥 Removed currentUser.token from dependency array
 

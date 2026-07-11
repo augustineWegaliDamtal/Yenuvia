@@ -236,7 +236,7 @@ const Schools = () => {
 
     // When the backend shouts that a match was added or settled, pull the trigger!
     const handleMatchStructuralChange = () => {
-      console.log("🏟️ Arena Match structural update detected!");
+      console.log("Yenuvia Match structural update detected!");
       setLiveUpdateTrigger(prev => prev + 1);
     };
 
@@ -310,7 +310,7 @@ const Schools = () => {
             <Hourglass size={40} className="text-yellow-500 mx-auto mb-4 animate-pulse" />
             <p className="text-yellow-500 font-black italic uppercase text-xl tracking-tighter">Halftime Deliberation</p>
             <p className="text-zinc-400 text-[10px] font-bold uppercase mt-2 leading-relaxed">
-              The previous round has concluded.<br/>The Arena Master is preparing the next bracket...
+              The previous round has concluded.<br/>Yenuvia Master is preparing the next bracket...
             </p>
           </div>
 

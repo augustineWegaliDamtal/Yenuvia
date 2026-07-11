@@ -83,7 +83,7 @@ const Signup = () => {
             <h1 className="text-4xl font-black italic uppercase tracking-tight leading-none">
               Create <span className="text-yellow-500">Identity</span>
             </h1>
-            <p className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.3em] mt-2 leading-tight">Create your path in to the Arena</p>
+            <p className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.3em] mt-2 leading-tight">Create your path in to Yenuvia</p>
           </div>
 
           <form onSubmit={handleFormSubmit} className="flex flex-col gap-6 relative z-30">

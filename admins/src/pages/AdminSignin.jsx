@@ -58,7 +58,7 @@ const AdminSignin = () => {
         if (data.user.role === "admin" || data.user.role === "superadmin") {
           saveToken("adminUser", data.token);
           dispatch(signinSuccess({ ...data.user, token: data.token }));
-          setMessage("✅ Success! Entering the Arena...");
+          setMessage("✅ Success! Entering the Yenuvia...");
           
           setTimeout(() => navigate("/home"), 1000); 
         } else {
@@ -181,7 +181,7 @@ const AdminSignin = () => {
         </div>
 
         <p className="mt-8 text-center text-gray-600 text-[10px] font-mono tracking-widest uppercase">
-          Arena Moderation Module // Secure Session
+          Yenuvia Moderation Module // Secure Session
         </p>
       </div>
     </div>

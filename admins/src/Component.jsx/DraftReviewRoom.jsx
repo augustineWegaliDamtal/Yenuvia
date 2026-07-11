@@ -65,7 +65,7 @@ const DraftReviewRoom = ({ match, onClose, token }) => {
   const handleDeleteDraft = async (e, draftId) => {
     e.stopPropagation(); // Stop the card from selecting when clicking delete
     
-    const confirmDelete = window.confirm("Are you sure you want to permanently delete this submission from the Arena?");
+    const confirmDelete = window.confirm("Are you sure you want to permanently delete this submission from the Yenuvia?");
     if (!confirmDelete) return;
 
     try {
@@ -115,7 +115,7 @@ const DraftReviewRoom = ({ match, onClose, token }) => {
       const data = await res.json();
       
       if (data.success) {
-        alert("🚨 FIXTURE DEPLOYED TO ARENA!");
+        alert("🚨 FIXTURE DEPLOYED TO YENUVIA!");
         
         const remainingDrafts = drafts.filter(d => !selectedDrafts.find(sd => sd._id === d._id));
         setDrafts(remainingDrafts);

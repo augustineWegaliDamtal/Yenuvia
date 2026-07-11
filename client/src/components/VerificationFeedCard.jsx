@@ -37,7 +37,7 @@ const VerificationFeedCard = () => {
       }
     } catch (err) {
       console.error(err);
-      alert("Error contacting the Arena gateway.");
+      alert("Error contacting the Yenuvia gateway.");
     } finally {
       setLoading(false);
     }
@@ -61,7 +61,7 @@ const VerificationFeedCard = () => {
         <div className="flex-1 text-center md:text-left space-y-4">
           <div>
             <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white flex items-center justify-center md:justify-start gap-2">
-              Arena <span className="text-yellow-500 flex items-center">Pro <Star size={16} className="ml-1" fill="currentColor"/></span>
+              Yenuvia <span className="text-yellow-500 flex items-center">Pro <Star size={16} className="ml-1" fill="currentColor"/></span>
             </h2>
             <p className="text-sm text-gray-400 font-medium mt-1">
               Unlock the golden checkmark, 0% listing fees, and instant MoMo payouts.

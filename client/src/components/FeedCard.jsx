@@ -135,7 +135,7 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalU
     const paystackKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
     const handler = window.PaystackPop.setup({
       key: paystackKey, 
-      email: activeUser?.email || "arena-guest@nkonkonsa.com", 
+      email: activeUser?.email || "Yenuvia-guest@yenuvia.com", 
       amount: Math.round(parseFloat(donationAmount) * 100), 
       currency: 'GHS',
       subaccount: subaccountCode, 
@@ -404,10 +404,10 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalU
           </div>
 
           {post.artistId?.verified && (
-            <div className="absolute -bottom-1 -right-1 z-40 bg-black rounded-full p-[2px] shadow-lg pointer-events-none">
-              <VerifiedBadge size={14} color="gold" />
-            </div>
-          )}
+  <div className="absolute -bottom-1 -right-1 z-40 bg-black rounded-full p-[2px] shadow-lg pointer-events-none">
+    <VerifiedBadge size={14} color="gold" verified={true} />
+  </div>
+)}
 
           {/* 🔥 THE FIX: Sanitized conditional check cleanly rendering the follow button */}
           {shouldShowFollowButton && (
@@ -473,12 +473,12 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalU
         )}
         
         <div onClick={handleProfileClick} className="block mb-1 cursor-pointer">
-          <h3 className="text-white font-bold text-[15px] drop-shadow-md flex items-center gap-1 flex-nowrap">
-            {post.artistName || post.artistId?.username}
-            {post.artistId?.verified && (
-              <VerifiedBadge size={14} color="#3b82f6" verified={true} />
-            )}
-          </h3>
+          <h3 className="text-white font-bold text-[15px] drop-shadow-md flex items-center gap-1.5 flex-nowrap">
+  <span>{post.artistName || post.artistId?.username}</span>
+  {post.artistId?.verified && (
+  <VerifiedBadge size={15} verified={true} className="ml-1" />
+)}
+</h3>
         </div>
 
         <div className="mb-3 bg-black/40 backdrop-blur-sm p-2.5 rounded-xl border border-white/10 shadow-lg inline-block w-full">

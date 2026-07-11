@@ -283,7 +283,7 @@ const ForYou = ({ activeTab }) => {
               return (
                 <div className="snap-start snap-always h-[100dvh] w-full flex-none flex flex-col justify-center bg-black relative overflow-hidden">
                   <Billboard liveUpdateTrigger={liveUpdateTrigger} />
-                  <div className="absolute bottom-24 left-1/2 -translate-x-1/2 animate-bounce z-50">
+                  <div className="absolute bottom-40 left-1/2 -translate-x-1/2 animate-bounce z-50">
                     <p className="text-[10px] text-white/30 font-black uppercase tracking-[0.3em]">Swipe Up</p>
                   </div>
                 </div>

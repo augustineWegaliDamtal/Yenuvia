@@ -43,7 +43,7 @@ const Terms = () => {
           <div className="flex items-center gap-3 mb-3">
             <Shield className="text-yellow-500" size={18} />
             <h2 className="text-sm font-black uppercase text-white tracking-widest">
-              1. The Arena (Standard Uploads)
+              1. Yenuvia (Standard Uploads)
             </h2>
           </div>
           <div className="bg-zinc-900/50 p-5 rounded-3xl border border-white/5 space-y-3 text-xs leading-relaxed">

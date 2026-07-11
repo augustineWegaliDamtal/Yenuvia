@@ -127,7 +127,7 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-white font-bold text-xs">@{comment.user?.username || "ArenaGuest"}</span>
+                      <span className="text-white font-bold text-xs">@{comment.user?.username || "YenuviaGuest"}</span>
                       {activeUser && comment.user?._id === activeUser._id && (
                         <button 
                           onClick={() => handleDelete(comment._id)} 
@@ -177,7 +177,7 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
                   onClick={onClose}
                   className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-colors"
                 >
-                  Join Arena
+                  Join Yenuvia
                 </Link>
               </div>
             )}

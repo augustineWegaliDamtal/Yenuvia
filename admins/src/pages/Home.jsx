@@ -74,7 +74,7 @@ const Home = () => {
     try {
       const res = await customFetch(`/api/work/${id}/reject`, {
         method: "PATCH",
-        body: JSON.stringify({ reason: "Does not meet Arena standards" })
+        body: JSON.stringify({ reason: "Does not meet Yenuvia standards" })
       });
       const data = await res.json();
       if (data.success) {
@@ -97,7 +97,7 @@ const Home = () => {
       <header className="flex justify-between items-center mb-10">
         <div>
            <h2 className="text-4xl font-black italic uppercase tracking-tighter text-slate-900 leading-none">
-            Arena <span className="text-blue-600">Command</span>
+            Yenuvia <span className="text-blue-600">Command</span>
           </h2>
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mt-2">Moderation & Analytics Engine</p>
         </div>

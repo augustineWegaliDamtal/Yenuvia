@@ -6,27 +6,39 @@ const InstallApp = () => {
   const [isInstallable, setIsInstallable] = useState(false);
 
   useEffect(() => {
-    // 1. Check if the app is already installed
+    // 1. Check if the app is already installed and running standalone
     if (window.matchMedia('(display-mode: standalone)').matches) {
       return; 
     }
 
     // 2. Catch the browser's hidden install prompt
     const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault(); // Stop Chrome from automatically showing its ugly default prompt
+      e.preventDefault(); // Stop Chrome from automatically showing its default prompt
       setDeferredPrompt(e); // Save it so we can trigger it with our custom button
       setIsInstallable(true);
     };
 
+    // 3. Guarantee cleanup if installation completes (even from browser menu)
+    const handleAppInstalled = () => {
+      setDeferredPrompt(null);
+      setIsInstallable(false);
+      console.log('Yenuvia successfully installed!');
+    };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
+
+    // 🔥 THE FIX: Hide the UI button immediately before opening the browser prompt!
+    setIsInstallable(false);
 
     // Show the official browser install prompt
     deferredPrompt.prompt();
@@ -35,11 +47,12 @@ const InstallApp = () => {
     const { outcome } = await deferredPrompt.userChoice;
     
     if (outcome === 'accepted') {
-      console.log('User installed Yenuvia!');
-      setIsInstallable(false); // Hide the button forever
+      console.log('User accepted the install prompt!');
+    } else {
+      console.log('User dismissed the install prompt');
     }
     
-    // Clear the saved prompt since it can't be used again
+    // Clear the saved prompt since browsers only allow it to be called once
     setDeferredPrompt(null);
   };
 

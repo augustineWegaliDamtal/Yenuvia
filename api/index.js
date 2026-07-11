@@ -82,8 +82,8 @@ app.use("/uploads", express.static(uploadDir));
 // 🛠 3. DATABASE
 mongoose
   .connect(process.env.MONGO_DB)
-  .then(() => console.log("✅ ARENA DB: Connected"))
-  .catch((err) => console.error("❌ ARENA DB ERROR:", err.message));
+  .then(() => console.log("✅ Yenuvia DB: Connected"))
+  .catch((err) => console.error("❌ Yenuvia DB ERROR:", err.message));
 
   startCronJobs();
 
@@ -114,7 +114,7 @@ app.use("/api/stakes", stakeRoutes);
 // ⚠️ 6. GLOBAL ERROR HANDLER
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
-  const message = err.message || "Arena Internal Error";
+  const message = err.message || "Yenuvia Internal Error";
   
   console.error(`🚨 [ERROR ${statusCode}]: ${message}`);
   if (statusCode === 500) console.error(err.stack);
@@ -124,4 +124,4 @@ app.use((err, req, res, next) => {
 startSubscriptionCron();
 // ⚡ 7. START SERVER
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🚀 ARENA CORE: Running on port ${PORT} with Global Sockets`)); 
+server.listen(PORT, () => console.log(`🚀 Yenuvia CORE: Running on port ${PORT} with Global Sockets`)); 

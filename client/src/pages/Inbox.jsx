@@ -180,7 +180,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
     <div className="flex flex-col h-screen w-full max-w-md mx-auto bg-black text-white relative">
       {/* HEADER */}
       <div className="p-6 border-b border-white/10 flex items-center justify-between bg-black sticky top-0 z-10">
-        <h2 className="text-sm font-black uppercase italic tracking-widest text-yellow-500">Arena Messenger</h2>
+        <h2 className="text-sm font-black uppercase italic tracking-widest text-yellow-500">Yenuvia Messenger</h2>
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
           <span className="text-[8px] font-black uppercase text-gray-500">Live Sync</span>
@@ -297,7 +297,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
       <div className="absolute bottom-16 left-0 right-0 p-4 bg-black/80 backdrop-blur-xl border-t border-white/5 z-20">
         <form onSubmit={handleSendMessage} className="flex items-center gap-2 bg-zinc-900 rounded-[1.5rem] p-2 pl-4 border border-white/5 shadow-2xl">
           <input type="text" value={formData.content} onChange={(e) => setFormData({ content: e.target.value })}
-            placeholder="Arena Transmission..." className="bg-transparent text-[11px] font-bold flex-1 outline-none border-none placeholder:text-zinc-600" />
+            placeholder="Yenuvia Transmission..." className="bg-transparent text-[11px] font-bold flex-1 outline-none border-none placeholder:text-zinc-600" />
           
           <input 
             type="file" 

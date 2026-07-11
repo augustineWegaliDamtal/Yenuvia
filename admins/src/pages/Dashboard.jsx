@@ -53,7 +53,7 @@ const Dashboard = () => {
       }
     } catch (err) {
       console.error("💥 Yenuvia CRASH:", err);
-      setError("Connection to Arena failed.");
+      setError("Connection to Yenuvia failed.");
     } finally {
       if (!isSilent) setLoading(false);
     }

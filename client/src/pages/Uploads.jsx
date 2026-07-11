@@ -123,7 +123,7 @@ const Upload = () => {
       const isImage = file.type.includes('image') || file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i);
 
       if (isVideo && fileSizeInMB > 100) {
-        dispatch(SET_LIVE_ALERT({ type: 'error', title: 'File Too Large', message: 'Arena videos must be under 200MB.' }));
+        dispatch(SET_LIVE_ALERT({ type: 'error', title: 'File Too Large', message: 'Yenuvia videos must be under 200MB.' }));
         continue;
       }
       if (isImage && fileSizeInMB > 5) {
@@ -154,7 +154,7 @@ const Upload = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isUploading) return setError("An upload is already in progress!");
-    if (localFiles.length === 0) return setError("The Arena needs visuals!");
+    if (localFiles.length === 0) return setError("Yenuvia needs visuals!");
     
     let finalSchoolName = formData.school;
     

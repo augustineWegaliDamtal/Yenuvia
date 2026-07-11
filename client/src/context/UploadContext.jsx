@@ -111,7 +111,7 @@ export const UploadProvider = ({ children }) => {
         dispatch(SET_LIVE_ALERT({ 
           type: "success", 
           title: "Deployed!", 
-          message: `${formData.title} is now in the Arena.` 
+          message: `${formData.title} is now in the Yenuvia Arena.` 
         }));
       } else {
         throw new Error(data.message);

@@ -137,7 +137,7 @@ export const loginAdmin = async (req, res, next) => {
     await systemLogModel.create({
       user: admin._id,
       action: "LOGIN_SUCCESS",
-      details: `${admin.role} ${admin.username} entered the Arena`,
+      details: `${admin.role} ${admin.username} entered  Yenuvia`,
     });
 
     const { password: pass, ...adminData } = admin._doc;

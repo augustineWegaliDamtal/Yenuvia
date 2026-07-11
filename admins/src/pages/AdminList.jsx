@@ -33,7 +33,7 @@ const AdminList = () => {
           setError(data.message || "Failed to load system users");
         }
       } catch (err) {
-        setError("Connection to Arena failed");
+        setError("Connection to Yenuvia failed");
         toast.error("⚠️ Connection Error");
       } finally {
         setLoading(false);

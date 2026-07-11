@@ -33,7 +33,7 @@ const WorkDetail = () => {
           setWork(data.work);
         }
       } catch (err) {
-        console.error("Arena Fetch Error:", err);
+        console.error("Yenuvia Fetch Error:", err);
       } finally {
         setLoading(false);
       }
