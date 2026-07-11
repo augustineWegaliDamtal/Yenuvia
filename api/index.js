@@ -59,6 +59,8 @@ origin: [
   process.env.BUYER_CLIENT_URL,
   "https://yenuvia-client.vercel.app",
   "https://yenuvia-admin.vercel.app",
+  'https://yenuvia.com',                  
+  'https://www.yenuvia.com',
   "http://localhost:5173", 
   "http://localhost:5174", 
   "http://localhost:5175"
