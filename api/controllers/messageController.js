@@ -25,18 +25,29 @@ export const getRecipients = async (req, res, next) => {
   }
 };
 
-// 📌 Get conversation history
+
 export const getMessages = async (req, res, next) => {
   try {
     const { otherUserId } = req.params;
     const currentUserId = req.user._id;
 
-    const messages = await Message.find({
-      $or: [
-        { sender: currentUserId, recipient: otherUserId },
-        { sender: otherUserId, recipient: currentUserId },
-      ],
-    })
+    // If an ID is passed (/api/messages/123), get that specific chat.
+    // If no ID is passed (/api/messages), get ALL user chats for the Inbox!
+    const query = otherUserId 
+      ? {
+          $or: [
+            { sender: currentUserId, recipient: otherUserId },
+            { sender: otherUserId, recipient: currentUserId },
+          ],
+        }
+      : {
+          $or: [
+            { sender: currentUserId },
+            { recipient: currentUserId },
+          ],
+        };
+
+    const messages = await Message.find(query)
       .populate("sender", "_id username role avatar")
       .populate("recipient", "_id username role avatar")
       .sort({ createdAt: 1 });

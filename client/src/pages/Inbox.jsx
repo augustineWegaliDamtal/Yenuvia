@@ -52,31 +52,37 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
     }
   }, [currentUserArtist, dispatch]);
 
-  // 📩 3. HISTORY FETCH
-  useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const res = await customFetch("/api/messages", {
-          headers: { Authorization: `Bearer ${currentUserArtist?.token}` },
-        });
-        const data = await res.json();
-        if (data.success) {
-          const sorted = data.messages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-          setMessages(sorted);
-        }
-      } catch (err) { console.error("Inbox offline"); }
-    };
-    
-    if (currentUserArtist?.token) {
-      fetchMessages();
-      dispatch(CLEAR_UNREAD_MESSAGES());
-    }
-  }, [currentUserArtist, dispatch]);
 
   // 🔄 4. AUTO-SCROLL
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+ // ⚡ FIXED: Listen for incoming messages (and ignore self-echoes!)
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleAdminReply = (newMsg) => {
+      console.log("🚨 Live transmission received:", newMsg);
+
+      setMessages((prev) => {
+        // 1. If the message ID already exists, ignore it
+        if (prev.some((m) => m._id === newMsg._id)) return prev;
+
+        // 2. If YOU sent this message, ignore the socket bounce! 
+        // Let the handleSendMessage customFetch resolution handle your own messages.
+        const senderId = String(newMsg.sender?._id || newMsg.sender);
+        if (senderId === String(currentUserArtist?._id)) {
+          return prev;
+        }
+
+        return [...prev, newMsg];
+      });
+    };
+
+    socket.on("receiveMessage", handleAdminReply);
+    return () => socket.off("receiveMessage", handleAdminReply);
+  }, [socket, currentUserArtist?._id]);
 
   // 📝 5. THREAD BUNDLING
   const groupedThreads = messages.reduce((acc, msg) => {

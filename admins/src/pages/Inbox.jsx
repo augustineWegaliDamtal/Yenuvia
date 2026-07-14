@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux";
 import { 
   CLEAR_MESSAGE_COUNT, 
-  INCREMENT_MESSAGE_COUNT, 
   SET_UNREAD_BY_USER 
 } from "../redux/user/adminNotificationsSlice"; 
 import { Send, Paperclip, MessageSquare, X, Film } from "lucide-react"; 
@@ -11,7 +10,7 @@ import { useSocket } from "../context/SocketContext";
 import customFetch from "../utility/customFetch";
 
 const Inbox = () => {
-const currentUser = useSelector((state) => state.admin?.currentUser) || {}; 
+  const currentUser = useSelector((state) => state.admin?.currentUser) || {}; 
   const { unreadMap } = useSelector((state) => state.adminNotifications) || { unreadMap: {} };
   const dispatch = useDispatch();
   
@@ -58,7 +57,6 @@ const currentUser = useSelector((state) => state.admin?.currentUser) || {};
     };
   }, [socket, currentUser?._id]);
 
-
   // =======================================================================
   // 🛡️ 2. THE UPGRADED BULLETPROOF RECEIVER (WITH LIST BUMPING)
   // =======================================================================
@@ -68,7 +66,6 @@ const currentUser = useSelector((state) => state.admin?.currentUser) || {};
   useEffect(() => { activeIdRef.current = selectedRecipient?._id; }, [selectedRecipient]);
   useEffect(() => { unreadMapRef.current = unreadMap; }, [unreadMap]);
 
-  // 🔥 REMOVED THE TOKENS AND HEADERS HERE
   const fetchData = useCallback(async () => {
     try {
       const [rRes, mRes] = await Promise.all([
@@ -86,16 +83,25 @@ const currentUser = useSelector((state) => state.admin?.currentUser) || {};
     } catch (err) {
       console.error("Yenuvia Link Offline");
     }
-  }, []); // 🔥 Removed currentUser.token from dependency array
+  }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // 🛠️ AUTO-SELECT FIRST RECIPIENT IF NONE SELECTED
+  useEffect(() => {
+    if (recipients.length > 0 && !selectedRecipient && !searchTerm) {
+      setSelectedRecipient(recipients[0]);
+    }
+  }, [recipients, selectedRecipient, searchTerm]);
+
   useEffect(() => {
     if (!socket || !currentUser?._id) return;
-
+console.log("⚡ [SOCKET OBJECT INITIALIZED]:", !!socket);
+    console.log("👤 [CURRENT USER OBJECT FROM REDUX]:", currentUser);
+    console.log("🆔 [EXTRACTED USER ID]:", currentUser?._id);
     const handleReceiveMessage = (message) => {
-      console.log("🚨 [INCOMING MESSAGE CAUGHT BY ADMIN]:", message);
-
+      console.log("🚨 [INCOMING MESSAGE CAUGHT BY ADMIN INBOX]:", message);
+      
       const sId = String(message.sender?._id || message.sender);
       const myId = String(currentUser._id);
       const activeId = activeIdRef.current ? String(activeIdRef.current) : null;
@@ -106,7 +112,7 @@ const currentUser = useSelector((state) => state.admin?.currentUser) || {};
         return [...prev, message];
       });
 
-      // 2. 🔥 THE FIX: AGGRESSIVELY BUMP SENDER TO THE TOP OF THE SIDEBAR
+      // 2. AGGRESSIVELY BUMP SENDER TO THE TOP OF THE SIDEBAR
       if (sId !== myId) {
         setRecipients((prev) => {
           const filteredList = prev.filter(r => String(r._id) !== sId);
@@ -116,16 +122,14 @@ const currentUser = useSelector((state) => state.admin?.currentUser) || {};
         });
       }
       
-      // 3. Trigger Badges & Sounds
+      // 3. Play sound if we aren't actively looking at them
       if (sId !== myId && sId !== activeId) {
         playAlert();
-        dispatch(INCREMENT_MESSAGE_COUNT());
-        
-        const currentCount = unreadMapRef.current[sId] || 0;
-        dispatch(SET_UNREAD_BY_USER({ 
-          senderId: sId, 
-          count: currentCount + 1 
-        }));
+      }
+
+      // 4. PREVENT "ACTIVE CHAT" GLITCH
+      if (sId === activeId) {
+        dispatch(SET_UNREAD_BY_USER({ senderId: sId, count: 0 }));
       }
     };
 
@@ -144,8 +148,8 @@ const currentUser = useSelector((state) => state.admin?.currentUser) || {};
   }, [socket, currentUser?._id, dispatch, playAlert, fetchData]); 
 
   // =======================================================================
-
   // 📨 TRANSMIT
+  // =======================================================================
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!formData.content.trim() && !file) return;
@@ -162,7 +166,6 @@ const currentUser = useSelector((state) => state.admin?.currentUser) || {};
       fd.append("content", contentToSubmit);
       if (fileToSubmit) fd.append("media", fileToSubmit);
 
-      // 🔥 customFetch handles the auth invisibly now
       const res = await customFetch("/api/messages", {
         method: "POST",
         body: fd,
@@ -173,7 +176,6 @@ const currentUser = useSelector((state) => state.admin?.currentUser) || {};
         setMessages((prev) => {
           if (prev.some(m => m._id === data.message._id)) return prev;
           
-          // 🛠️ THE FIX: Guarantee the IDs exist so the activeConversation filter doesn't hide it
           const completeMessage = {
             ...data.message,
             sender: data.message.sender || currentUser._id,
@@ -188,31 +190,44 @@ const currentUser = useSelector((state) => state.admin?.currentUser) || {};
     }
   };
 
-  const activeConversation = useMemo(() => {
-    if (!selectedRecipient || !currentUser?._id) return [];
-    const selId = String(selectedRecipient._id);
-    const curId = String(currentUser._id);
-    return messages.filter(m => {
-      const sId = String(m.sender?._id || m.sender);
-      const rId = String(m.recipient?._id || m.recipient);
-      return (sId === selId && rId === curId) || (sId === curId && rId === selId);
-    });
-  }, [messages, selectedRecipient, currentUser?._id]);
+    // 🛡️ BULLETPROOF ACTIVE CONVERSATION FILTER
+const activeConversation = useMemo(() => {
+  if (!selectedRecipient || !currentUser?._id) return [];
+  
+  // Upgraded helper: handles ObjectIds, populated objects, and prevents whitespace/case mismatches
+  const getCleanId = (val) => {
+    if (!val) return "";
+    if (typeof val === "object" && val._id) return val._id.toString().trim().toLowerCase();
+    if (typeof val === "object" && val.id) return val.id.toString().trim().toLowerCase();
+    return val.toString().trim().toLowerCase();
+  };
+
+  const selId = getCleanId(selectedRecipient);
+  const curId = getCleanId(currentUser);
+
+  return messages.filter((m) => {
+    // Checks all standard MERN backend naming conventions
+    const sId = getCleanId(m.sender || m.from || m.senderId || m.author);
+    const rId = getCleanId(m.recipient || m.receiver || m.receiverId || m.to);
+
+    const matchNormal = (sId === selId && rId === curId);
+    const matchInverse = (sId === curId && rId === selId);
+
+    return matchNormal || matchInverse;
+  });
+}, [messages, selectedRecipient, currentUser]);
 
   const sortedRecipients = useMemo(() => {
     return recipients.filter(r => r.username.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [recipients, searchTerm]);
 
   const isPreviewVideo = file && (file.type.includes('video') || file.name.match(/\.(mp4|webm|ogg|mov)$/i));
-    console.log("1. Current User ID:", currentUser?._id);
-  console.log("2. Selected Recipient ID:", selectedRecipient?._id);
-  console.log("3. Raw DB Messages:", messages);
-  console.log("4. Filtered Conversation:", activeConversation)
+
   return (
     <div className="flex h-screen bg-[#0a0a0a] text-white overflow-hidden pb-32"> 
       
       {/* SIDEBAR */}
-      <div className="flex w-64 md:w-80 border-r border-white/5 flex-col bg-[#0d0d0d]">
+    <div className="flex w-64 md:w-80 border-r border-white/5 flex-col bg-[#0d0d0d]">
         <div className="p-6">
           <h1 className="text-2xl font-black italic uppercase tracking-tighter text-yellow-500 mb-4">Comms</h1>
           <input 
@@ -223,7 +238,7 @@ const currentUser = useSelector((state) => state.admin?.currentUser) || {};
           />
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 space-y-2 scrollbar-hide">
+       <div className="flex-1 overflow-y-auto px-4 space-y-2 scrollbar-hide">
           {sortedRecipients.map(r => {
             const rId = String(r._id);
             const isSel = selectedRecipient && String(selectedRecipient._id) === rId;
@@ -231,11 +246,22 @@ const currentUser = useSelector((state) => state.admin?.currentUser) || {};
             return (
               <button 
                 key={rId} 
-                onClick={() => {
+                
+                // 🔥 REPLACE THE OLD ONCLICK HERE WITH THIS CODE:
+                onClick={async () => {
                   setSelectedRecipient(r);
                   dispatch(SET_UNREAD_BY_USER({ senderId: rId, count: 0 })); 
                   dispatch(CLEAR_MESSAGE_COUNT()); 
+
+                  try {
+                    await customFetch(`/api/messages/read/${rId}`, { 
+                      method: "PATCH" 
+                    });
+                  } catch (err) {
+                    console.error("⚠️ Failed to synchronize message read state with backend:", err);
+                  }
                 }} 
+                
                 className={`w-full flex items-center gap-4 p-4 rounded-[1.8rem] transition-all relative ${isSel ? "bg-yellow-500 text-black shadow-lg shadow-yellow-500/10" : "hover:bg-white/5"}`}
               >
                 <div className="relative flex-shrink-0">
@@ -386,7 +412,7 @@ const currentUser = useSelector((state) => state.admin?.currentUser) || {};
           </div>
         )}
       </div>
-      <BottomNav />
+     
     </div>
   );
 };

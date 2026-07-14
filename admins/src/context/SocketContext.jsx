@@ -1,22 +1,25 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux'; 
 import { io } from 'socket.io-client';
-// 1. Import your auth hook so we know who is currently logged in!
-// (Adjust the import path below to match where your auth context lives, e.g., useAuth, useSelector, etc.)
-import { useAuth } from './AuthContext'; 
+
+// 🔌 Bind your notification actions directly to the global socket manager
+import { INCREMENT_MESSAGE_COUNT, SET_UNREAD_BY_USER } from '../redux/user/adminNotificationsSlice';
 
 const SocketContext = createContext();
 
-// 2. Automatically switch: Use real backend URL in production, or "/" for local Vite proxy
+// Realigns dev default to port 3000 to match your active backend server
 const SOCKET_URL = import.meta.env.PROD 
   ? import.meta.env.VITE_BACKEND_URL 
-  : "/";
+  : import.meta.env.VITE_DEV_BACKEND_URL || "http://localhost:3000"; 
 
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
-  const { currentUser } = useAuth(); // Extract the logged-in user
+  const dispatch = useDispatch(); 
+  
+  // ✅ FIX: Fixed target to pull 'currentUser' from your admin state block
+  const currentUser = useSelector((state) => state.user?.currentUser || state.admin?.currentUser);
 
   useEffect(() => {
-    // If there's no logged-in user yet, don't spin up an unauthenticated socket
     if (!currentUser?._id) {
       if (socket) {
         socket.disconnect();
@@ -25,35 +28,44 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
-    console.log(`🔌 Initializing socket connection for user: ${currentUser._id}`);
+    console.log(`🔌 Admin initializing socket connection for user: ${currentUser._id} at ${SOCKET_URL}`);
 
-    // 🔥 THE FIX: Pass the user's ID and role so the backend auto-joins their notification room!
     const newSocket = io(SOCKET_URL, {
       path: "/socket.io",
-      withCredentials: true, // Required for secure cookies/sessions across domains
-      query: {
+      withCredentials: true,
+      auth: {
         userId: currentUser._id,
-        role: currentUser.role || "user"
+        role: currentUser.role || "admin" 
       },
-      // In production across separate domains, polling must establish the handshake before upgrading to websockets
       transports: ['polling', 'websocket'] 
     });
 
     newSocket.on("connect", () => {
-      console.log(`✅ Socket connected successfully with ID: ${newSocket.id}`);
+      console.log(`✅ Admin Socket connected successfully! Assignment ID: ${newSocket.id}`);
     });
 
     newSocket.on("connect_error", (err) => {
-      console.error("❌ Socket connection error:", err.message);
+      console.error("❌ Admin Socket failed to hook to backend server:", err.message);
+    });
+
+    // --- 🚨 GLOBAL ALERT LISTENER (THE BACKGROUND BACKGROUND BADGE engine) ---
+    newSocket.on("receiveMessage", (newMessage) => {
+      console.log("Stream received by global context listener:", newMessage);
+      
+      const senderId = String(newMessage.sender?._id || newMessage.sender || "");
+      if (senderId && senderId !== String(currentUser._id)) {
+        // Automatically sync global navigation badge state down to redux store hooks
+        dispatch(INCREMENT_MESSAGE_COUNT());
+      }
     });
 
     setSocket(newSocket);
 
     return () => {
-      console.log(`🧹 Disconnecting socket for user: ${currentUser._id}`);
+      newSocket.off("receiveMessage"); 
       newSocket.disconnect();
     };
-  }, [currentUser?._id, currentUser?.role]); // Re-run if the user logs in, logs out, or switches accounts
+  }, [currentUser?._id, dispatch]); 
 
   return (
     <SocketContext.Provider value={socket}>

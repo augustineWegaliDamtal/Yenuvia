@@ -1,7 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux"; 
-// 🔥 1. Removed local socket.io-client and imported the Global Hook
+
+// 🔥 1. Global Socket Hook
 import { useSocket } from "./context/SocketContext"; 
 
 // --- PAGES ---
@@ -24,58 +25,97 @@ import BottomNav from "./Component.jsx/BottomNav";
 import { 
   INCREMENT_UNREAD_ADMIN, 
   INCREMENT_MESSAGE_COUNT,
-  SET_UNREAD_BY_USER 
+  SET_UNREAD_BY_USER // 🔥 Added to allow background tracking
 } from "./redux/user/adminNotificationsSlice";
 
 const App = () => {
   const { currentUser } = useSelector((state) => state.admin || {});
-  const { unreadMap } = useSelector((state) => state.adminNotifications || { unreadMap: {} });
+  const { unreadMap } = useSelector((state) => state.adminNotifications) || { unreadMap: {} };
   const dispatch = useDispatch();
 
   const isAdmin = currentUser?.role === "admin";
   const isSuperAdmin = currentUser?.role === "superadmin";
   const isAuthenticated = isAdmin || isSuperAdmin;
 
-  // 🔥 2. GRAB THE GLOBAL WALKIE-TALKIE
+  // 🔥 2. GRAB THE GLOBAL SOCKET INSTANCE
   const socket = useSocket();
 
-  // 🔌 3. REAL-TIME ENGINE (Listening Mode)
-  useEffect(() => {
-    // Wait until the global socket is ready and user is logged in
-    if (!socket || !currentUser?._id || !currentUser?.token) return;
+  // 🛡️ Safety Ref to track unread maps without breaking socket triggers
+  const unreadMapRef = useRef(unreadMap);
+  useEffect(() => { 
+    unreadMapRef.current = unreadMap; 
+  }, [unreadMap]);
 
-    // 💬 CHANNEL 1: CHAT MESSAGES
+  // 🔌 3. REAL-TIME ENGINE (Listening & Connected Mode)
+  useEffect(() => {
+    if (!socket || !currentUser?._id) return;
+    console.log("📡 [SOCKET DIAGNOSTIC]:", {
+    socketExists: !!socket,
+    isConnected: socket?.connected || false,
+    socketId: socket?.id || "NO ID",
+    currentUserId: currentUser?._id || "NOT LOGGED IN"
+  });
+
+    // 🚪 1. Safety Net: Ensure Admin is joined to their private room
+    const connectAdminToRoom = () => {
+      socket.emit("join", currentUser._id);
+      console.log("🟢 Admin joined socket room globally!");
+    };
+
+    if (socket.connected) {
+      connectAdminToRoom();
+    }
+    socket.on("connect", connectAdminToRoom);
+
+    // 💬 2. CHANNEL 1: CHAT MESSAGES (Global Alert Fix)
     const handleReceiveMessage = (message) => {
+      console.log("🚀 SOCKET RECEIVED [Global]:", {
+        sender: message.sender?._id || message.sender,
+        content: message.content,
+        timestamp: new Date().toISOString()
+      });
+      
       const senderId = String(message.sender?._id || message.sender);
       
+      // Only trigger an alert if the message was sent by someone else
       if (senderId && senderId !== String(currentUser._id)) {
-        // Update Global Nav Count
+        // Safely increment your global unread badge counter (BottomNav)
         dispatch(INCREMENT_MESSAGE_COUNT());
         
-        // Update Sidebar Red Dot Map
-        dispatch(SET_UNREAD_BY_USER({ 
-          senderId, 
-          count: (unreadMap[senderId] || 0) + 1 
-        }));
+        // 🔥 PERFECT BACKGROUND SYNC: 
+        // Updates the individual sidebar count even if you are on the Home/Dashboard pages!
+        const currentCount = unreadMapRef.current[senderId] || 0;
+        dispatch(SET_UNREAD_BY_USER({ senderId: senderId, count: currentCount + 1 }));
+
+        console.log("🔔 Global message caught! Dispatching unread badge count...");
       }
     };
 
-    // 🎨 CHANNEL 2: NEW ART SUBMISSIONS (Moderation Queue Alert)
+    // 🚨 3. CHANNEL 1.5: SPECIFIC ADMIN TRIGGER
+    const handleNewAdminMessage = (data) => {
+      console.log("🚨 Global Admin received a specific message trigger:", data);
+    };
+
+    // 🎨 4. CHANNEL 2: NEW ART SUBMISSIONS
     const handleNewWork = (data) => {
-      console.log("🚨 Admin Alert:", data?.message);
+      console.log("🚨 Admin Alert (New Work):", data?.message);
       dispatch(INCREMENT_UNREAD_ADMIN());
     };
 
     // Turn on the listeners
     socket.on("receiveMessage", handleReceiveMessage);
+    socket.on("new_admin_message", handleNewAdminMessage);
     socket.on("newWorkSubmitted", handleNewWork);
 
-    // Cleanup listeners when component unmounts
+    // Cleanup listeners when component unmounts or dependencies change
     return () => {
+      socket.off("connect", connectAdminToRoom);
       socket.off("receiveMessage", handleReceiveMessage);
+      socket.off("new_admin_message", handleNewAdminMessage);
       socket.off("newWorkSubmitted", handleNewWork);
     };
-  }, [socket, currentUser, dispatch, unreadMap]); 
+    
+  }, [socket, currentUser?._id, dispatch]);
 
   return (
     <BrowserRouter>
@@ -100,6 +140,7 @@ const App = () => {
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
 
+        {/* Global Navigation - Only shows when logged in */}
         {isAuthenticated && <BottomNav />}
       </div>
     </BrowserRouter>
