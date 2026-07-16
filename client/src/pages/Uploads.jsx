@@ -171,6 +171,9 @@ const Upload = () => {
               .toLowerCase()
               .replace(/\b\w/g, char => char.toUpperCase());
         }
+    } else {
+        // If professional, explicitly mark them as Independent to avoid blank school entries breaking views
+        finalSchoolName = "Independent Professional";
     }
 
     if (formData.isForSale && (formData.price <= 0)) {
@@ -182,8 +185,17 @@ const Upload = () => {
     // Strip out the 'customSchool' helper field before sending to the backend
     const { customSchool, ...cleanFormData } = formData;
     
-    // Hand the files to the Background Engine with the sanitized school name
-    startBackgroundUpload(localFiles, { ...cleanFormData, school: finalSchoolName }, selectedMatchId);
+    // 🔥 THE CRITICAL FIX: Add both matchId and selectedMatchId directly into the metadata object.
+    // This guarantees it gets serialized into the body payload regardless of how your background worker is written.
+    const metadataWithMatch = { 
+      ...cleanFormData, 
+      school: finalSchoolName,
+      matchId: selectedMatchId || undefined,
+      selectedMatchId: selectedMatchId || undefined
+    };
+
+    // Hand the files to the Background Engine with the sanitized school name and injected match values
+    startBackgroundUpload(localFiles, metadataWithMatch, selectedMatchId);
 
     // KICK THEM IMMEDIATELY TO THE FEED!
     navigate("/home"); 

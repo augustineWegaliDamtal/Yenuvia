@@ -11,12 +11,41 @@ import { getIO } from '../socket/socketManager.js';
 
 export const uploadWork = async (req, res, next) => {
   try {
-    const { title, description, category, school, mediaFiles, isForSale, price, condition, matchId } = req.body;
+    let { title, description, category, school, mediaFiles, isForSale, price, condition, matchId, selectedMatchId } = req.body;
     const artistId = req.user._id; 
     const artistName = req.user.username;
 
+    // 1. Safe parsing if mediaFiles arrives as a JSON string (common with FormData)
+    if (typeof mediaFiles === 'string') {
+      try {
+        mediaFiles = JSON.parse(mediaFiles);
+      } catch (e) {
+        return next(errorHandler(400, "Invalid mediaFiles format sent to server"));
+      }
+    }
+
     if (!title || !description || !category || !mediaFiles?.length) {
       return next(errorHandler(400, "The Arena requires a title, story, and visuals!"));
+    }
+
+    // 2. Extract and sanitize matchId (handling both key names & casting to Mongo ObjectId)
+    const rawMatchId = matchId || selectedMatchId;
+    let validMatchId = null;
+    if (rawMatchId && rawMatchId !== "null" && rawMatchId !== "undefined" && rawMatchId !== "") {
+      validMatchId = mongoose.Types.ObjectId.isValid(rawMatchId) 
+        ? new mongoose.Types.ObjectId(rawMatchId) 
+        : rawMatchId;
+    }
+
+    // 3. Auto-detect video type if not explicitly set
+    let workType = "image";
+    if (mediaFiles.length > 1) {
+      workType = "carousel";
+    } else if (mediaFiles.length === 1) {
+      const firstFile = mediaFiles[0];
+      const url = firstFile.mediaUrl || "";
+      const isVideoFile = firstFile.type === "video" || url.match(/\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i);
+      workType = isVideoFile ? "video" : (firstFile.type || "image");
     }
 
     const sanitizeSchool = (name) => {
@@ -28,34 +57,33 @@ export const uploadWork = async (req, res, next) => {
         .replace(/\b\w/g, c => c.toUpperCase());
     };
 
-    // 🔥 SAVE THE SANITIZED NAME TO A VARIABLE
     const sanitizedSchoolName = category === "school" ? sanitizeSchool(school) : null;
 
     const newWork = new Work({
       title: title.trim(),
       description: description.trim(),
       mediaUrls: mediaFiles.map(file => file.mediaUrl),
-      type: mediaFiles.length > 1 ? "carousel" : (mediaFiles[0].type || "image"), 
+      type: workType, 
       category,
-      school: sanitizedSchoolName, // Use the variable here
+      school: sanitizedSchoolName,
       artistId: artistId,
       artistName: artistName,
       status: "pending",
       views: 0, likes: 0, comments: 0,
 
-      isForSale: isForSale || false,
-      price: isForSale ? Number(price) : 0,
-      condition: isForSale ? (condition || "Original") : "Original",
+      isForSale: isForSale === true || isForSale === "true",
+      price: (isForSale === true || isForSale === "true") ? Number(price) : 0,
+      condition: (isForSale === true || isForSale === "true") ? (condition || "Original") : "Original",
       isSold: false,
 
-      matchId: matchId || null,
+      matchId: validMatchId,
     });
-    const savedWork = await newWork.save();
 
-    // 🔥 USE THE SAME SANITIZED VARIABLE FOR THE SCHOOL LOOKUP
+    const savedWork = await newWork.save();
+console.log("📥 UPLOAD PAYLOAD RECEIVED:", req.body);
     if (category === "school" && sanitizedSchoolName) {
       await School.findOneAndUpdate(
-        { name: sanitizedSchoolName }, // Use the variable here!
+        { name: sanitizedSchoolName },
         { 
           $inc: { totalPoints: 5 }, 
           $addToSet: { members: artistId } 
@@ -67,21 +95,31 @@ export const uploadWork = async (req, res, next) => {
     const populatedWork = await Work.findById(savedWork._id)
       .populate("artistId", "username avatar verified school");
 
+    // 4. Real-time socket emissions to refresh Admin Review Rooms immediately
     const io = getIO();
+    
+    // Broadcast to admins_room
     io.to("admins_room").emit("newWorkSubmitted", {
       message: `New Drop from @${artistName}: ${title}`,
       work: populatedWork
     });
 
+    // Broadcast global draft events for match/tournament rooms
+    if (validMatchId) {
+      io.emit("new_match_draft", { matchId: validMatchId, work: populatedWork });
+    }
+    io.emit("work_updated", populatedWork);
+
     res.status(201).json({ 
       success: true, 
-      message: matchId ? "Draft Submitted! Awaiting Superadmin selection." : "Deployed! Awaiting Arena Moderation.", 
+      message: validMatchId ? "Draft Submitted! Awaiting Superadmin selection." : "Deployed! Awaiting Arena Moderation.", 
       work: populatedWork 
     });
   } catch (error) {
+    console.error("🚨 UPLOAD WORK ERROR:", error);
     next(error);
   }
-};
+}; 
 
 
 export const deleteWork = async (req, res, next) => {

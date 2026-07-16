@@ -4,7 +4,8 @@ import {
   CLEAR_MESSAGE_COUNT, 
   SET_UNREAD_BY_USER 
 } from "../redux/user/adminNotificationsSlice"; 
-import { Send, Paperclip, MessageSquare, X, Film } from "lucide-react"; 
+// 🔥 Added ArrowLeft icon for mobile navigation
+import { Send, Paperclip, MessageSquare, X, Film, ArrowLeft } from "lucide-react"; 
 import BottomNav from "../Component.jsx/BottomNav";
 import { useSocket } from "../context/SocketContext";
 import customFetch from "../utility/customFetch";
@@ -87,16 +88,17 @@ const Inbox = () => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // 🛠️ AUTO-SELECT FIRST RECIPIENT IF NONE SELECTED
+  // 🛠️ AUTO-SELECT FIRST RECIPIENT ONLY ON DESKTOP SCREENS
   useEffect(() => {
-    if (recipients.length > 0 && !selectedRecipient && !searchTerm) {
+    const isDesktop = window.innerWidth >= 768; // check if tablet/desktop width
+    if (isDesktop && recipients.length > 0 && !selectedRecipient && !searchTerm) {
       setSelectedRecipient(recipients[0]);
     }
   }, [recipients, selectedRecipient, searchTerm]);
 
   useEffect(() => {
     if (!socket || !currentUser?._id) return;
-console.log("⚡ [SOCKET OBJECT INITIALIZED]:", !!socket);
+    console.log("⚡ [SOCKET OBJECT INITIALIZED]:", !!socket);
     console.log("👤 [CURRENT USER OBJECT FROM REDUX]:", currentUser);
     console.log("🆔 [EXTRACTED USER ID]:", currentUser?._id);
     const handleReceiveMessage = (message) => {
@@ -190,32 +192,30 @@ console.log("⚡ [SOCKET OBJECT INITIALIZED]:", !!socket);
     }
   };
 
-    // 🛡️ BULLETPROOF ACTIVE CONVERSATION FILTER
-const activeConversation = useMemo(() => {
-  if (!selectedRecipient || !currentUser?._id) return [];
-  
-  // Upgraded helper: handles ObjectIds, populated objects, and prevents whitespace/case mismatches
-  const getCleanId = (val) => {
-    if (!val) return "";
-    if (typeof val === "object" && val._id) return val._id.toString().trim().toLowerCase();
-    if (typeof val === "object" && val.id) return val.id.toString().trim().toLowerCase();
-    return val.toString().trim().toLowerCase();
-  };
+  // 🛡️ BULLETPROOF ACTIVE CONVERSATION FILTER
+  const activeConversation = useMemo(() => {
+    if (!selectedRecipient || !currentUser?._id) return [];
+    
+    const getCleanId = (val) => {
+      if (!val) return "";
+      if (typeof val === "object" && val._id) return val._id.toString().trim().toLowerCase();
+      if (typeof val === "object" && val.id) return val.id.toString().trim().toLowerCase();
+      return val.toString().trim().toLowerCase();
+    };
 
-  const selId = getCleanId(selectedRecipient);
-  const curId = getCleanId(currentUser);
+    const selId = getCleanId(selectedRecipient);
+    const curId = getCleanId(currentUser);
 
-  return messages.filter((m) => {
-    // Checks all standard MERN backend naming conventions
-    const sId = getCleanId(m.sender || m.from || m.senderId || m.author);
-    const rId = getCleanId(m.recipient || m.receiver || m.receiverId || m.to);
+    return messages.filter((m) => {
+      const sId = getCleanId(m.sender || m.from || m.senderId || m.author);
+      const rId = getCleanId(m.recipient || m.receiver || m.receiverId || m.to);
 
-    const matchNormal = (sId === selId && rId === curId);
-    const matchInverse = (sId === curId && rId === selId);
+      const matchNormal = (sId === selId && rId === curId);
+      const matchInverse = (sId === curId && rId === selId);
 
-    return matchNormal || matchInverse;
-  });
-}, [messages, selectedRecipient, currentUser]);
+      return matchNormal || matchInverse;
+    });
+  }, [messages, selectedRecipient, currentUser]);
 
   const sortedRecipients = useMemo(() => {
     return recipients.filter(r => r.username.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -224,10 +224,10 @@ const activeConversation = useMemo(() => {
   const isPreviewVideo = file && (file.type.includes('video') || file.name.match(/\.(mp4|webm|ogg|mov)$/i));
 
   return (
-    <div className="flex h-screen bg-[#0a0a0a] text-white overflow-hidden pb-32"> 
+    <div className="flex h-screen bg-[#0a0a0a] text-white overflow-hidden pb-24 md:pb-32"> 
       
-      {/* SIDEBAR */}
-    <div className="flex w-64 md:w-80 border-r border-white/5 flex-col bg-[#0d0d0d]">
+      {/* SIDEBAR (Responsive classes applied) */}
+      <div className={`w-full md:w-80 border-r border-white/5 flex-col bg-[#0d0d0d] ${selectedRecipient ? "hidden md:flex" : "flex"}`}>
         <div className="p-6">
           <h1 className="text-2xl font-black italic uppercase tracking-tighter text-yellow-500 mb-4">Comms</h1>
           <input 
@@ -238,7 +238,7 @@ const activeConversation = useMemo(() => {
           />
         </div>
 
-       <div className="flex-1 overflow-y-auto px-4 space-y-2 scrollbar-hide">
+        <div className="flex-1 overflow-y-auto px-4 space-y-2 scrollbar-hide">
           {sortedRecipients.map(r => {
             const rId = String(r._id);
             const isSel = selectedRecipient && String(selectedRecipient._id) === rId;
@@ -246,8 +246,6 @@ const activeConversation = useMemo(() => {
             return (
               <button 
                 key={rId} 
-                
-                // 🔥 REPLACE THE OLD ONCLICK HERE WITH THIS CODE:
                 onClick={async () => {
                   setSelectedRecipient(r);
                   dispatch(SET_UNREAD_BY_USER({ senderId: rId, count: 0 })); 
@@ -261,7 +259,6 @@ const activeConversation = useMemo(() => {
                     console.error("⚠️ Failed to synchronize message read state with backend:", err);
                   }
                 }} 
-                
                 className={`w-full flex items-center gap-4 p-4 rounded-[1.8rem] transition-all relative ${isSel ? "bg-yellow-500 text-black shadow-lg shadow-yellow-500/10" : "hover:bg-white/5"}`}
               >
                 <div className="relative flex-shrink-0">
@@ -289,17 +286,23 @@ const activeConversation = useMemo(() => {
         </div>
       </div>
 
-      {/* CHAT WINDOW */}
-      <div className="flex-1 flex flex-col relative bg-black">
+      {/* CHAT WINDOW (Responsive classes applied) */}
+      <div className={`flex-1 flex flex-col relative bg-black ${selectedRecipient ? "flex" : "hidden md:flex"}`}>
         {selectedRecipient ? (
           <>
-            {/* Header */}
-            <div className="p-6 border-b border-white/5 text-yellow-500 font-black italic uppercase tracking-widest bg-black/50 backdrop-blur-xl">
-              @{selectedRecipient.username}
+            {/* Header (With Mobile-Only Back Arrow) */}
+            <div className="p-6 border-b border-white/5 text-yellow-500 font-black italic uppercase tracking-widest bg-black/50 backdrop-blur-xl flex items-center gap-4">
+              <button 
+                onClick={() => setSelectedRecipient(null)} 
+                className="md:hidden text-white hover:text-yellow-500 transition-all mr-2 p-1 bg-white/5 rounded-full"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <span className="truncate">@{selectedRecipient.username}</span>
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-8 space-y-4 scrollbar-hide">
+            <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-4 scrollbar-hide">
               {activeConversation.map((msg, i) => {
                 const isMe = String(msg.sender?._id || msg.sender) === String(currentUser?._id);
                 
@@ -315,7 +318,7 @@ const activeConversation = useMemo(() => {
 
                 return (
                   <div key={msg._id || i} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[75%] p-4 rounded-[1.5rem] text-[11px] font-bold shadow-lg ${
+                    <div className={`max-w-[85%] md:max-w-[75%] p-4 rounded-[1.5rem] text-[11px] font-bold shadow-lg ${
                       isMe ? "bg-yellow-500 text-black rounded-tr-none" : "bg-white/5 text-white rounded-tl-none border border-white/5"
                     }`}>
                       {msg.content}
@@ -355,7 +358,7 @@ const activeConversation = useMemo(() => {
 
             {/* Live Preview Bubble */}
             {file && (
-              <div className="absolute bottom-28 left-8 right-8 bg-zinc-900 p-3 rounded-2xl border border-yellow-500/50 flex items-center gap-4 shadow-2xl z-30 backdrop-blur-lg w-max max-w-sm">
+              <div className="absolute bottom-28 left-4 right-4 md:left-8 md:right-8 bg-zinc-900 p-3 rounded-2xl border border-yellow-500/50 flex items-center gap-4 shadow-2xl z-30 backdrop-blur-lg w-max max-w-[calc(100%-2rem)] md:max-w-sm">
                 <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-black border border-white/10 shrink-0 flex items-center justify-center">
                   {isPreviewVideo ? (
                     <>
@@ -375,8 +378,8 @@ const activeConversation = useMemo(() => {
             )}
 
             {/* Transmission Form */}
-            <form onSubmit={handleSendMessage} className="p-8 bg-black border-t border-white/5 relative z-20">
-              <div className="max-w-3xl mx-auto flex items-center gap-4 bg-white/5 border border-white/5 rounded-[2rem] p-3 pl-8 focus-within:border-yellow-500/50 transition-all">
+            <form onSubmit={handleSendMessage} className="p-4 md:p-8 bg-black border-t border-white/5 relative z-20">
+              <div className="max-w-3xl mx-auto flex items-center gap-3 bg-white/5 border border-white/5 rounded-[2rem] p-2 pl-4 md:p-3 md:pl-8 focus-within:border-yellow-500/50 transition-all">
                 <input 
                   type="text" 
                   value={formData.content} 
@@ -399,8 +402,8 @@ const activeConversation = useMemo(() => {
                   <Paperclip size={20} />
                 </label>
 
-                <button type="submit" className="bg-yellow-500 text-black p-4 rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg shadow-yellow-500/20">
-                  <Send size={20} />
+                <button type="submit" className="bg-yellow-500 text-black p-3 md:p-4 rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg shadow-yellow-500/20">
+                  <Send size={18} />
                 </button>
               </div>
             </form>

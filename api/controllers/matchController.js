@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Match } from "../models/matchModel.js";
 import { Stake } from "../models/stakeModel.js";
 import Work from "../models/Work.js";
@@ -77,16 +78,48 @@ export const getActiveMatches = async (req, res) => {
   }
 };
 
+
+
 export const getMatchDrafts = async (req, res) => {
   try {
-    const drafts = await Work.find({ matchId: req.params.id })
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ success: false, message: "Match ID is required" });
+    }
+
+    // 1. Convert string ID to Mongoose ObjectId safely
+    const isValidId = mongoose.Types.ObjectId.isValid(id);
+    const matchObjectId = isValidId ? new mongoose.Types.ObjectId(id) : id;
+
+    // 2. Query flexibly across String, ObjectId, matchId, and match fields
+    const drafts = await Work.find({
+      $or: [
+        { matchId: matchObjectId },
+        { matchId: String(id) },
+        { match: matchObjectId },
+        { match: String(id) }
+      ]
+    })
       .populate("artistId", "username avatar school verified")
       .sort({ createdAt: -1 });
 
-    res.status(200).json({ success: true, drafts });
+    console.log(`📡 GET /api/matches/${id}/drafts -> Found ${drafts.length} works`);
+
+    // 3. Send back with extra key fallbacks for safety
+    return res.status(200).json({
+      success: true,
+      drafts,
+      works: drafts,
+      data: drafts
+    });
   } catch (error) {
-    console.error("Draft Fetch Error:", error);
-    res.status(500).json({ success: false, message: "Failed to load drafts" });
+    console.error("❌ Error in getMatchDrafts:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load drafts",
+      error: error.message
+    });
   }
 };
 

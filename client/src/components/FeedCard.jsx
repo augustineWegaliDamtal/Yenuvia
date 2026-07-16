@@ -541,6 +541,10 @@ export default React.memo(FeedCard, (prevProps, nextProps) => {
     prevProps.post._id === nextProps.post._id &&
     prevProps.post.likes === nextProps.post.likes &&
     prevProps.post.shares === nextProps.post.shares &&
+    // 🔥 NEW: Tell the card to re-render if the post status changes
+    prevProps.post.status === nextProps.post.status && 
+    // 🔥 NEW: Tell the card to re-render if the artist gets verified
+    prevProps.post.artistId?.verified === nextProps.post.artistId?.verified &&
     JSON.stringify(prevProps.post.commentsList) === JSON.stringify(nextProps.post.commentsList)
   );
 });

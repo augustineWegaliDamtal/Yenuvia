@@ -145,23 +145,55 @@ const ForYou = ({ activeTab }) => {
   }, [activeTab, fetchPosts, feedPosts.length]);
 
   // WebSocket Event Listeners
-  useEffect(() => {
-    if (!socket) return;
+    // WebSocket Event Listeners
+useEffect(() => {
+  if (!socket) return;
 
-    const handleItemRemoved = (data) => {
-      const idToRemove = String(data?.workId || data?._id || data?.id || data);
-      const currentPosts = feedPostsRef.current;
-      dispatch(SET_FEED_POSTS(currentPosts.filter((p) => String(p._id) !== idToRemove)));
+  // 🗑️ 1. Handle Removals/Deletions
+  const handleItemRemoved = (data) => {
+    const idToRemove = String(data?.workId || data?._id || data?.id || data);
+    const currentPosts = feedPostsRef.current;
+    dispatch(SET_FEED_POSTS(currentPosts.filter((p) => String(p._id) !== idToRemove)));
+  };
+
+  // ⚡ 2. Handle Live Verifications & Content Updates
+  const handleItemUpdated = (data) => {
+    // Extract payload safely regardless of backend wrapping structure
+    const updatedPost = data?.work || data?.post || data;
+    if (!updatedPost || !updatedPost._id) return;
+    
+    // 🛡️ Safe Pass: Format incoming media URLs to match the rest of the feed cache
+    const processedPost = {
+      ...updatedPost,
+      mediaUrls: updatedPost.mediaUrls ? updatedPost.mediaUrls.map((url) => optimizeCloudinaryUrl(url)) : [],
     };
 
-    socket.on("work_removed_from_feed", handleItemRemoved);
-    socket.on("work_deleted", handleItemRemoved);
+    const currentPosts = feedPostsRef.current;
+    const exists = currentPosts.some((p) => String(p._id) === String(processedPost._id));
 
-    return () => {
-      socket.off("work_removed_from_feed", handleItemRemoved);
-      socket.off("work_deleted", handleItemRemoved);
-    };
-  }, [socket, dispatch]);
+    if (exists) {
+      // SCENARIO A: The card is already on screen. Update its visual state/badge instantly!
+      dispatch(UPDATE_SINGLE_POST(processedPost));
+    } else if (processedPost.status === "approved") {
+      // SCENARIO B: A brand new post just got verified. Slap it right onto the top of the feed stream.
+      dispatch(SET_FEED_POSTS([processedPost, ...currentPosts]));
+    }
+  };
+
+  // Turn on listeners
+  socket.on("work_removed_from_feed", handleItemRemoved);
+  socket.on("work_deleted", handleItemRemoved);
+  socket.on("work_verified", handleItemUpdated);
+  socket.on("work_updated", handleItemUpdated);
+
+  return () => {
+    // Clean up listeners
+    socket.off("work_removed_from_feed", handleItemRemoved);
+    socket.off("work_deleted", handleItemRemoved);
+    socket.off("work_verified", handleItemUpdated);
+    socket.off("work_updated", handleItemUpdated);
+  };
+}, [socket, dispatch, optimizeCloudinaryUrl]); // 👈 Added optimizeCloudinaryUrl here safely
 
   // Redux Optimistic Like Action Handler
   const handleLike = useCallback(async (postId) => {
