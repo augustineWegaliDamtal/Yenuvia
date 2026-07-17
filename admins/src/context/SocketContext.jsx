@@ -1,23 +1,33 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux'; 
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+ 
+import { useDispatch, useSelector } from "react-redux";
 import { io } from 'socket.io-client';
 
-// 🔌 Bind your notification actions directly to the global socket manager
-import { INCREMENT_MESSAGE_COUNT, SET_UNREAD_BY_USER } from '../redux/user/adminNotificationsSlice';
+// 🔌 Notification actions
+import { INCREMENT_MESSAGE_COUNT } from '../redux/user/adminNotificationsSlice';
 
 const SocketContext = createContext();
 
-// Realigns dev default to port 3000 to match your active backend server
-const SOCKET_URL = import.meta.env.PROD 
+// 💡 FIX 1: Sanitize URL and prevent undefined URL falling back to frontend host
+const rawUrl = import.meta.env.PROD 
   ? import.meta.env.VITE_BACKEND_URL 
   : import.meta.env.VITE_DEV_BACKEND_URL || "http://localhost:3000"; 
+
+// Remove trailing slash if present
+const SOCKET_URL = (rawUrl || "http://localhost:3000").replace(/\/$/, "");
 
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const dispatch = useDispatch(); 
   
-  // ✅ FIX: Fixed target to pull 'currentUser' from your admin state block
   const currentUser = useSelector((state) => state.user?.currentUser || state.admin?.currentUser);
+  
+  // 💡 FIX 2: Use ref to always have fresh user ID in event listeners without reconnecting
+  const userIdRef = useRef(currentUser?._id);
+
+  useEffect(() => {
+    userIdRef.current = currentUser?._id;
+  }, [currentUser?._id]);
 
   useEffect(() => {
     if (!currentUser?._id) {
@@ -28,33 +38,39 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
-    console.log(`🔌 Admin initializing socket connection for user: ${currentUser._id} at ${SOCKET_URL}`);
+    console.log(`🔌 Initializing admin socket to: ${SOCKET_URL}`);
 
     const newSocket = io(SOCKET_URL, {
       path: "/socket.io",
       withCredentials: true,
+      // 💡 FIX 3: Prioritize websocket over polling for production proxies
+      transports: ['websocket', 'polling'], 
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
       auth: {
         userId: currentUser._id,
         role: currentUser.role || "admin" 
-      },
-      transports: ['polling', 'websocket'] 
+      }
     });
 
     newSocket.on("connect", () => {
-      console.log(`✅ Admin Socket connected successfully! Assignment ID: ${newSocket.id}`);
+      console.log(`✅ Admin Socket connected! ID: ${newSocket.id}`);
     });
 
     newSocket.on("connect_error", (err) => {
-      console.error("❌ Admin Socket failed to hook to backend server:", err.message);
+      console.error("❌ Admin Socket connection error:", err.message);
     });
 
-    // --- 🚨 GLOBAL ALERT LISTENER (THE BACKGROUND BACKGROUND BADGE engine) ---
+    // 🚨 GLOBAL MESSAGE LISTENER
     newSocket.on("receiveMessage", (newMessage) => {
-      console.log("Stream received by global context listener:", newMessage);
+      console.log("📩 Message received in socket context:", newMessage);
       
+      const activeUserId = String(userIdRef.current || "");
       const senderId = String(newMessage.sender?._id || newMessage.sender || "");
-      if (senderId && senderId !== String(currentUser._id)) {
-        // Automatically sync global navigation badge state down to redux store hooks
+      
+      // If message is from someone else, increment unread badge count
+      if (senderId && senderId !== activeUserId) {
         dispatch(INCREMENT_MESSAGE_COUNT());
       }
     });

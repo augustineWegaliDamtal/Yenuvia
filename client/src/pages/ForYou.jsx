@@ -18,6 +18,7 @@ import {
 } from "../redux/users/artistworkSlice"; 
 import { useSocket } from "../context/SocketContext";
 import customFetch from "../util/customFetch";
+import { updateVerificationStatus } from "../redux/users/artistSlice";
 
 const EMPTY_LEADERBOARD = [];
 
@@ -145,56 +146,87 @@ const ForYou = ({ activeTab }) => {
   }, [activeTab, fetchPosts, feedPosts.length]);
 
   // WebSocket Event Listeners
-    // WebSocket Event Listeners
-useEffect(() => {
-  if (!socket) return;
+  useEffect(() => {
+    if (!socket) return;
 
-  // 🗑️ 1. Handle Removals/Deletions
-  const handleItemRemoved = (data) => {
-    const idToRemove = String(data?.workId || data?._id || data?.id || data);
-    const currentPosts = feedPostsRef.current;
-    dispatch(SET_FEED_POSTS(currentPosts.filter((p) => String(p._id) !== idToRemove)));
-  };
-
-  // ⚡ 2. Handle Live Verifications & Content Updates
-  const handleItemUpdated = (data) => {
-    // Extract payload safely regardless of backend wrapping structure
-    const updatedPost = data?.work || data?.post || data;
-    if (!updatedPost || !updatedPost._id) return;
-    
-    // 🛡️ Safe Pass: Format incoming media URLs to match the rest of the feed cache
-    const processedPost = {
-      ...updatedPost,
-      mediaUrls: updatedPost.mediaUrls ? updatedPost.mediaUrls.map((url) => optimizeCloudinaryUrl(url)) : [],
+    // 🗑️ 1. Handle Removals/Deletions
+    const handleItemRemoved = (data) => {
+      const idToRemove = String(data?.workId || data?._id || data?.id || data);
+      const currentPosts = feedPostsRef.current;
+      dispatch(SET_FEED_POSTS(currentPosts.filter((p) => String(p._id) !== idToRemove)));
     };
 
-    const currentPosts = feedPostsRef.current;
-    const exists = currentPosts.some((p) => String(p._id) === String(processedPost._id));
+    // ⚡ 2. Handle Live Work Verifications & Content Updates
+    const handleItemUpdated = (data) => {
+      const updatedPost = data?.work || data?.post || data;
+      if (!updatedPost || !updatedPost._id) return;
+      
+      const processedPost = {
+        ...updatedPost,
+        mediaUrls: updatedPost.mediaUrls ? updatedPost.mediaUrls.map((url) => optimizeCloudinaryUrl(url)) : [],
+      };
 
-    if (exists) {
-      // SCENARIO A: The card is already on screen. Update its visual state/badge instantly!
-      dispatch(UPDATE_SINGLE_POST(processedPost));
-    } else if (processedPost.status === "approved") {
-      // SCENARIO B: A brand new post just got verified. Slap it right onto the top of the feed stream.
-      dispatch(SET_FEED_POSTS([processedPost, ...currentPosts]));
+      const currentPosts = feedPostsRef.current;
+      const exists = currentPosts.some((p) => String(p._id) === String(processedPost._id));
+
+      if (exists) {
+        dispatch(UPDATE_SINGLE_POST(processedPost));
+      } else if (processedPost.status === "approved") {
+        dispatch(SET_FEED_POSTS([processedPost, ...currentPosts]));
+      }
+    };
+
+    const handleArtistVerificationUpdated = ({ artistId, verified }) => {
+  console.log(`⚡ Live verification update for artist ${artistId}:`, verified);
+
+  const targetId = String(artistId);
+
+  // 1. IF THE LOGGED-IN ARTIST IS THE ONE BEING (UN)VERIFIED -> UPDATE PROFILE
+  if (activeUser && String(activeUser._id) === targetId) {
+    dispatch(updateVerificationStatus(verified));
+  }
+
+  // 2. UPDATE ALL POSTS IN THE FEED STREAM INSTANTLY
+  const currentPosts = feedPostsRef.current;
+  const updatedPosts = currentPosts.map((post) => {
+    const postArtistId = String(
+      post.artistId?._id || post.artistId || post.user?._id || post.user || ""
+    );
+
+    if (postArtistId === targetId) {
+      return {
+        ...post,
+        artistId: typeof post.artistId === "object" && post.artistId !== null
+          ? { ...post.artistId, verified }
+          : { _id: post.artistId, verified },
+      };
     }
-  };
+    return post;
+  });
 
-  // Turn on listeners
-  socket.on("work_removed_from_feed", handleItemRemoved);
-  socket.on("work_deleted", handleItemRemoved);
-  socket.on("work_verified", handleItemUpdated);
-  socket.on("work_updated", handleItemUpdated);
+  // Pushes updated feed array back to artistworkSlice
+  dispatch(SET_FEED_POSTS(updatedPosts));
+};
 
-  return () => {
-    // Clean up listeners
-    socket.off("work_removed_from_feed", handleItemRemoved);
-    socket.off("work_deleted", handleItemRemoved);
-    socket.off("work_verified", handleItemUpdated);
-    socket.off("work_updated", handleItemUpdated);
-  };
-}, [socket, dispatch, optimizeCloudinaryUrl]); // 👈 Added optimizeCloudinaryUrl here safely
+socket.on("artist_verification_updated", handleArtistVerificationUpdated);
 
+
+    // Turn on listeners
+    socket.on("work_removed_from_feed", handleItemRemoved);
+    socket.on("work_deleted", handleItemRemoved);
+    socket.on("work_verified", handleItemUpdated);
+    socket.on("work_updated", handleItemUpdated);
+    socket.on("artist_verification_updated", handleArtistVerificationUpdated); // 👈 LISTEN TO YOUR BACKEND EVENT
+
+    return () => {
+      // Clean up listeners
+      socket.off("work_removed_from_feed", handleItemRemoved);
+      socket.off("work_deleted", handleItemRemoved);
+      socket.off("work_verified", handleItemUpdated);
+      socket.off("work_updated", handleItemUpdated);
+      socket.off("artist_verification_updated", handleArtistVerificationUpdated); // 👈 CLEAN UP
+    };
+  }, [socket, dispatch, optimizeCloudinaryUrl]);
   // Redux Optimistic Like Action Handler
   const handleLike = useCallback(async (postId) => {
     if (!activeUser) return;
