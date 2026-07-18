@@ -256,7 +256,7 @@ const Upload = () => {
             </button>
             <button type="button" onClick={() => setFormData({...formData, category: "professional", school: "", customSchool: ""})} className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${formData.category === "professional" ? "border-yellow-500 bg-yellow-500/10 shadow-[0_0_15px_rgba(234,179,8,0.1)]" : "border-white/5 bg-white/5 opacity-50 hover:opacity-100"}`}>
               <UserCircle size={20} className={formData.category === "professional" ? "text-yellow-500" : "text-white"} /> 
-              <span className={`text-[10px] font-black uppercase tracking-widest ${formData.category === "professional" ? "text-yellow-500" : "text-white"}`}>Professional</span>
+              <span className={`text-[10px] font-black uppercase tracking-widest ${formData.category === "professional" ? "text-yellow-500" : "text-white"}`}>Solo Entery</span>
             </button>
           </div>
 

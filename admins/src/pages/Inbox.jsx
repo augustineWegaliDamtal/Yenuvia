@@ -108,10 +108,18 @@ const Inbox = () => {
       const myId = String(currentUser._id);
       const activeId = activeIdRef.current ? String(activeIdRef.current) : null;
 
-      // 1. Add to conversation history
+      // 🔥 THE FIX: Repair missing IDs from the socket payload immediately
+      const patchedMessage = {
+        ...message,
+        // If I sent it, the recipient is the active user. Otherwise, the recipient is ME.
+        recipient: message.recipient || (sId === myId ? activeId : myId),
+        sender: message.sender || sId
+      };
+
+      // 1. Add to conversation history using the PATCHED message
       setMessages((prev) => {
-        if (prev.some(m => m._id === message._id)) return prev;
-        return [...prev, message];
+        if (prev.some(m => m._id === patchedMessage._id)) return prev;
+        return [...prev, patchedMessage];
       });
 
       // 2. AGGRESSIVELY BUMP SENDER TO THE TOP OF THE SIDEBAR
@@ -119,7 +127,7 @@ const Inbox = () => {
         setRecipients((prev) => {
           const filteredList = prev.filter(r => String(r._id) !== sId);
           const existingUser = prev.find(r => String(r._id) === sId);
-          const userToTop = existingUser || message.sender;
+          const userToTop = existingUser || patchedMessage.sender;
           return [userToTop, ...filteredList];
         });
       }

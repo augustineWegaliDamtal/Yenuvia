@@ -20,7 +20,7 @@ const Inbox = () => {
   
   const socket = useSocket();
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
 
   // 🔌 1. ESTABLISH THE SECURE CONNECTION
   useEffect(() => {
@@ -30,7 +30,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
     }
   }, [socket, currentUserArtist?._id]);
 
- // 📩 3. HISTORY FETCH (UPDATED)
+  // 📩 2. HISTORY FETCH
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -47,18 +47,15 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
     
     if (currentUserArtist?.token) {
       fetchMessages();
-      // 🚨 REMOVED: dispatch(CLEAR_UNREAD_MESSAGES());
-      // We no longer instantly wipe the badge before the user sees it.
     }
   }, [currentUserArtist, dispatch]);
 
-
-  // 🔄 4. AUTO-SCROLL
+  // 🔄 3. AUTO-SCROLL
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
- // ⚡ FIXED: Listen for incoming messages (and ignore self-echoes!)
+  // ⚡ 4. FIXED: Listen for incoming messages & Patch the "Invisible Echo"
   useEffect(() => {
     if (!socket) return;
 
@@ -66,17 +63,26 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
       console.log("🚨 Live transmission received:", newMsg);
 
       setMessages((prev) => {
-        // 1. If the message ID already exists, ignore it
+        // 1. If the message ID already exists, ignore it (HTTP fallback)
         if (prev.some((m) => m._id === newMsg._id)) return prev;
 
-        // 2. If YOU sent this message, ignore the socket bounce! 
-        // Let the handleSendMessage customFetch resolution handle your own messages.
         const senderId = String(newMsg.sender?._id || newMsg.sender);
-        if (senderId === String(currentUserArtist?._id)) {
+        const myId = String(currentUserArtist?._id);
+
+        // 2. If YOU sent this message, ignore the socket bounce! 
+        if (senderId === myId) {
           return prev;
         }
 
-        return [...prev, newMsg];
+        // 🔥 THE FIX: Patch the message so the thread bundler doesn't drop it.
+        // If it's an incoming message, the recipient is definitively ME (the artist).
+        const patchedMsg = {
+          ...newMsg,
+          recipient: newMsg.recipient || myId,
+          sender: newMsg.sender || senderId
+        };
+
+        return [...prev, patchedMsg];
       });
     };
 
@@ -88,7 +94,10 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
   const groupedThreads = messages.reduce((acc, msg) => {
     const sId = String(msg.sender?._id || msg.sender);
     const rId = String(msg.recipient?._id || msg.recipient);
-    if (!sId || !rId) return acc;
+    
+    // If our socket patch wasn't there, incoming messages would die right here
+    if (!sId || !rId) return acc; 
+    
     const key = [sId, rId].sort().join("-");
     if (!acc[key]) acc[key] = [];
     acc[key].push(msg);
@@ -102,7 +111,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
     }
   }, [groupedThreads, selectedThreadKey]);
 
-// 🚀 6. SWIFT SEND ACTION (UPDATED)
+  // 🚀 6. SWIFT SEND ACTION
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!formData.content.trim() && !file) return;
@@ -160,8 +169,6 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
         setMessages((prev) => 
           prev.map(m => {
             if (m._id === optimisticId) {
-              // 🔥 THE FIX: Guarantee the sender/recipient data isn't lost during the swap
-              // This prevents the grouping function from dropping the message
               return {
                 ...data.message,
                 sender: data.message.sender || currentUserArtist,
@@ -198,7 +205,6 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
         {selectedThreadKey && groupedThreads[selectedThreadKey].map((msg) => {
           const isMe = String(msg.sender?._id || msg.sender) === String(currentUserArtist._id);
           
-          // 🔥 THE FIX: Construct robust image URLs
           let mediaSrc = null;
           if (msg.mediaUrl) {
             let cleanUrl = msg.mediaUrl.replace(/\\/g, '/');
@@ -250,7 +256,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
                       <div className="p-4 text-[9px] text-zinc-500 font-bold uppercase italic">Unsupported File</div>
                     )}
                     
-                    {/* Fallback hidden text - Shows up if image/video onError fires */}
+                    {/* Fallback hidden text */}
                     <div style={{ display: 'none' }} className="p-4 text-[9px] text-zinc-500 font-bold uppercase italic text-center">
                       Media Unavailable
                     </div>
