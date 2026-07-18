@@ -333,6 +333,15 @@ export const spawnDerby = async (req, res) => {
   try {
     // 1. Parse the contenders array from the FormData string
     const contenders = JSON.parse(req.body.contenders);
+
+    // 🛡️ THE FIX: Auto-fetch missing 'school' data from the Artist's profile
+    for (let contender of contenders) {
+      if (!contender.school && contender.artistId) {
+        const artist = await User.findById(contender.artistId);
+        // Inject the school, or fallback to "Independent" to ensure Mongoose validation passes
+        contender.school = artist?.school || "Independent"; 
+      }
+    }
     
     // 2. Updated helper to correctly process the Multer file array
     const processCrestUpload = async (fileArray) => {
@@ -358,7 +367,7 @@ export const spawnDerby = async (req, res) => {
     const parentMatch = await Match.findById(req.params.id);
     if (!parentMatch) return res.status(404).json({ success: false, message: "Directive not found." });
 
-    // 5. Save the new Derby to MongoDB (Now with logoUrls!)
+    // 5. Save the new Derby to MongoDB (Now with logoUrls AND the required school!)
     const newDerby = await Match.create({
       directive: parentMatch.directive,
       league: parentMatch.league,
