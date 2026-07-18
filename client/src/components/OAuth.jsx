@@ -1,12 +1,14 @@
 import React from 'react';
 import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { app } from '../firebase';
+import { app } from '../firebase.js';
 import { artistSigninSuccess, artistSigninFailure } from '../redux/users/artistSlice';
 import { useDispatch } from 'react-redux';
+
 import { useNavigate } from 'react-router-dom';
 // 🔥 CRITICAL: Import saveToken so Google users stay logged in!
 import { saveToken } from '../../../api/utils/tokenManager.js';
 import customFetch from '../util/customFetch.js';
+
 
 const OAuth = () => {
   const dispatch = useDispatch();

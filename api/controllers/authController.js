@@ -79,9 +79,10 @@ res.cookie("access_token", token, {
 
 export const Google = async (req, res, next) => {
   try {
-    // 🔥 FIX 1: Change 'photo' to 'avatar'
     const { name, email, avatar } = req.body; 
     let user = await User.findOne({ email });
+
+    const isProduction = process.env.NODE_ENV === "production";
 
     if (user) {
       const token = jwt.sign(
@@ -91,19 +92,19 @@ export const Google = async (req, res, next) => {
       );
       const { password, ...userData } = user._doc;
       userData.role = user.role.toLowerCase();
-      return 
-      const isProduction = process.env.NODE_ENV === "production";
 
-res.cookie("access_token", token, {
-  httpOnly: true,
-  secure: isProduction ? true : false,
-  sameSite: isProduction ? "none" : "lax",
-  maxAge: 24 * 60 * 60 * 1000,
-})
-        .status(200)
-        .json({ success: true, user: userData, token });
+      // ✅ FIX: Attach cookie and return the response properly!
+      return res.cookie("access_token", token, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
+        maxAge: 24 * 60 * 60 * 1000,
+      })
+      .status(200)
+      .json({ success: true, user: userData, token });
     }
 
+    // Creating a new user
     const generatedPassword = Math.random().toString(36).slice(-8);
     const hashedPassword = await bcryptjs.hash(generatedPassword, 10);
     const username = name.split(" ").join("").toLowerCase() + Math.random().toString(36).slice(-4);
@@ -112,7 +113,6 @@ res.cookie("access_token", token, {
       username,
       email,
       password: hashedPassword,
-      // 🔥 FIX 2: Pass the avatar directly
       avatar, 
       role: "artist",
     });
@@ -127,17 +127,16 @@ res.cookie("access_token", token, {
     const { password, ...userData } = newUser._doc;
     userData.role = newUser.role.toLowerCase();
 
-    return 
-    const isProduction = process.env.NODE_ENV === "production";
+    // ✅ FIX: Attach cookie and return the response properly!
+    return res.cookie("access_token", token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    })
+    .status(200)
+    .json({ success: true, user: userData, token });
 
-res.cookie("access_token", token, {
-  httpOnly: true,
-  secure: isProduction ? true : false,
-  sameSite: isProduction ? "none" : "lax",
-  maxAge: 24 * 60 * 60 * 1000,
-})
-      .status(200)
-      .json({ success: true, user: userData, token });
   } catch (error) {
     next(errorHandler(500, error.message));
   }
