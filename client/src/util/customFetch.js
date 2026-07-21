@@ -15,8 +15,29 @@ const customFetch = async (endpoint, options = {}) => {
 
   const url = endpoint.startsWith("http") ? endpoint : `${BACKEND_URL}${endpoint}`;
   console.log("🚀 Attempting to fetch:", url);
-  const response = await fetch(url, options);
-  return response;
+  
+  // 🛡️ NEW GLOBAL ERROR HANDLING
+  try {
+    const response = await fetch(url, options);
+    return response;
+  } catch (error) {
+    // 🚨 This catches network crashes (backend sleeping, user loses internet, DNS errors)
+    console.error("Yenuvia Network Error intercepted:", error.message);
+
+    // 🛡️ THE SAFETY NET:
+    // We return a "fake" response that mimics a real backend error. 
+    // This stops React from crashing when your components run `await res.json()`
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: "Connection issue. Please check your internet or try again later.",
+      }),
+      {
+        status: 503, // 503 means Service Unavailable
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
 };
 
 export default customFetch;

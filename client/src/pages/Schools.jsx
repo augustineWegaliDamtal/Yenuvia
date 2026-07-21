@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom"; // 🔥 Added for navigation
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Clock, TrendingUp, Swords, Flame, Loader2, 
-  Zap, X, Maximize2, Trophy, Hourglass 
+  Zap, X, Maximize2, Trophy, Hourglass, Lock // 🔥 Added Lock icon
 } from "lucide-react";
 import SupportButton from "../components/SupportButton";
-import { useSocket } from '../context/SocketContext'; // 🔥 Brought in the Global Socket
+import { useSocket } from '../context/SocketContext'; 
 import customFetch from "../util/customFetch.js";
 
 // --- 🏆 THE UPGRADED VICTORY CARD ---
@@ -36,8 +37,7 @@ const VictoryCard = ({ match }) => {
         </div>
       </div>
       <div className="text-right shrink-0 pl-2">
-        <p className="text-zinc-500 text-[9px] font-black uppercase tracking-widest">Bounty Secured</p>
-        {/* Shows the total raised for this specific fixture */}
+        <p className="text-zinc-500 text-[9px] font-black uppercase tracking-widest">Funds Secured</p>
         <p className="text-green-500 font-black text-sm">GHS {match.totalPool?.toLocaleString()}</p>
       </div>
     </motion.div>
@@ -47,23 +47,15 @@ const VictoryCard = ({ match }) => {
 // --- 🥊 THE INDIVIDUAL MATCH CARD COMPONENT (LIVE MATCHES) ---
 const DerbyMatchCard = ({ match, activeUser, onSupportSuccess }) => {
   const [playingVideo, setPlayingVideo] = useState(null);
-
-  // 🔥 1. Connect to the Global Socket
   const socket = useSocket();
-
-  // 🔥 2. Set up local state to react instantly without refreshing
   const [livePool, setLivePool] = useState(match.totalPool);
   const [liveContenders, setLiveContenders] = useState(match.contenders);
 
-  // 🔥 3. The Real-Time Listener
   useEffect(() => {
     if (!socket) return;
-
-    // Join the specific room for this Derby
     socket.emit("join_match", match._id);
 
     const handlePoolUpdate = (data) => {
-      // Ensure the incoming update matches this specific card
       if (data.matchId === match._id) {
         setLivePool(data.newTotalPool);
         setLiveContenders(data.contenders);
@@ -71,16 +63,13 @@ const DerbyMatchCard = ({ match, activeUser, onSupportSuccess }) => {
     };
 
     socket.on("pool_updated", handlePoolUpdate);
-
     return () => {
       socket.off("pool_updated", handlePoolUpdate);
     };
   }, [socket, match._id]);
 
-  // 🔥 4. Calculate percentages dynamically using the LIVE state
   const contenderA = liveContenders[0];
   const contenderB = liveContenders[1];
-
   const percentA = livePool > 0 && contenderA ? Math.round((contenderA.totalStaked / livePool) * 100) : 50;
   const percentB = livePool > 0 && contenderB ? Math.round((contenderB.totalStaked / livePool) * 100) : 50;
 
@@ -118,8 +107,7 @@ const DerbyMatchCard = ({ match, activeUser, onSupportSuccess }) => {
         <div className="text-center mt-3 flex items-center justify-center gap-2">
           <TrendingUp size={14} className="text-zinc-500" />
           <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">
-            {/* 🔥 Updates instantly with livePool */}
-            TOTAL BOUNTY: <span className="text-white">GHS {livePool.toLocaleString()}</span>
+            TOTAL Support Funds: <span className="text-white">GHS {livePool.toLocaleString()}</span>
           </span>
         </div>
       </div>
@@ -161,7 +149,7 @@ const DerbyMatchCard = ({ match, activeUser, onSupportSuccess }) => {
       {/* SUPPORT ENGINE */}
       <div className="bg-white/5 p-4 rounded-3xl border border-white/10">
         <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3 text-center">
-          Boost your faction to increase their bounty
+          Support your best Work
         </h4>
         <div className="flex flex-col gap-1">
           <SupportButton matchId={match._id} contenderId={contenderA._id} schoolName={contenderA.school} theme="yellow" onComplete={onSupportSuccess} />
@@ -195,20 +183,19 @@ const DerbyMatchCard = ({ match, activeUser, onSupportSuccess }) => {
 
 // --- 🏟️ THE MAIN LEAGUE SCREEN ---
 const Schools = () => {
+  // 1. ALL HOOKS AT THE TOP
   const [liveMatches, setLiveMatches] = useState([]);
   const [completedMatches, setCompletedMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeLeague, setActiveLeague] = useState("UNI");
+  const [liveUpdateTrigger, setLiveUpdateTrigger] = useState(0);
   
   const activeUser = useSelector((state) => state.user?.currentUser || state.artist?.currentUserArtist);
-
-  // ✅ 1. Bring in the Global Socket and the Trigger!
+  const navigate = useNavigate(); // 🔥 Setup Navigation
   const socket = useSocket();
-  const [liveUpdateTrigger, setLiveUpdateTrigger] = useState(0);
 
   const fetchMatches = async () => {
     try {
-      // Only show the big loading spinner if we have absolutely nothing to show yet
       if (liveMatches.length === 0 && completedMatches.length === 0) setLoading(true);
       
       const res = await customFetch(`/api/matches?league=${activeLeague}&status=LIVE,COMPLETED`);
@@ -225,22 +212,21 @@ const Schools = () => {
     }
   };
 
-  // ✅ 2. The Fetch now safely listens to BOTH the league tab AND the live socket trigger
   useEffect(() => {
+    // 🔥 Guard: Don't waste server resources fetching if there's no user
+    if (!activeUser) return; 
     fetchMatches();
-  }, [activeLeague, liveUpdateTrigger]);
+  }, [activeLeague, liveUpdateTrigger, activeUser]);
 
-  // ⚡ 3. THE REAL-TIME MATCH OBSERVER
   useEffect(() => {
-    if (!socket) return;
+    // 🔥 Guard: Don't attach socket listeners if there's no user
+    if (!socket || !activeUser) return;
 
-    // When the backend shouts that a match was added or settled, pull the trigger!
     const handleMatchStructuralChange = () => {
       console.log("Yenuvia Match structural update detected!");
       setLiveUpdateTrigger(prev => prev + 1);
     };
 
-    // Listen for new matches being deployed or old ones being finished
     socket.on("new_match", handleMatchStructuralChange);
     socket.on("match_settled", handleMatchStructuralChange);
 
@@ -248,11 +234,46 @@ const Schools = () => {
       socket.off("new_match", handleMatchStructuralChange);
       socket.off("match_settled", handleMatchStructuralChange);
     };
-  }, [socket]);
+  }, [socket, activeUser]);
 
+
+  // 2. 🔥 EARLY RETURN FOR UNAUTHENTICATED USERS (Must be placed AFTER all hooks)
+  if (!activeUser) {
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[#050505] min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] p-8 max-w-sm w-full text-center shadow-2xl relative overflow-hidden">
+          {/* Subtle background glow */}
+          <div className="absolute inset-0 bg-yellow-500/5 blur-3xl rounded-full pointer-events-none" />
+          
+          <div className="relative z-10">
+            <div className="bg-yellow-500/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 border border-yellow-500/20 shadow-[0_0_30px_rgba(234,179,8,0.15)]">
+              <Lock size={36} className="text-yellow-500" />
+            </div>
+            
+            <h2 className="text-white font-black italic text-3xl uppercase tracking-tighter mb-3">
+              Access<br/>Restricted
+            </h2>
+            
+            <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.15em] leading-relaxed mb-8 px-4">
+              You must be verified to enter the National Derby arena and support the best team.
+            </p>
+            
+            <button
+              onClick={() => navigate('/signin')}
+              className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black uppercase text-xs tracking-[0.2em] py-4 rounded-2xl transition-all shadow-[0_0_20px_rgba(234,179,8,0.2)]"
+            >
+              Sign In To Enter
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+
+  // 3. MAIN RENDER FOR AUTHENTICATED USERS
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[#050505] min-h-screen pb-24">
-      
       {/* LEAGUE FILTERS */}
       <div className="sticky top-0 z-50 bg-[#050505]/90 backdrop-blur-xl border-b border-white/5 pt-4 pb-2 px-4">
         <div className="flex justify-between items-center mb-4 px-2">

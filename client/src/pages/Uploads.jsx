@@ -12,13 +12,13 @@ import customFetch from "../util/customFetch";
 // 🔥 EXPANDED GHANA SCHOOLS DATABASE
 const GHANA_SCHOOLS = [
   // Universities
-  "University of Ghana (UG)", "KNUST", "University of Cape Coast (UCC)",
-  "Ashesi University", "Academic City University", "University of Education, Winneba (UEW)",
-  "University for Development Studies (UDS)", "University of Mines and Technology (UMaT)",
+  "University of Ghana(UG)", "KNUST", "University of Cape Coast(UCC)",
+  "Ashesi University", "Academic City University", "University of Education, Winneba(UEW)",
+  "University for Development Studies(UDS)", "University of Mines and Technology(UMaT)",
   "UPSA", "Valley View University", "Central University", "UHAS",
   
   // High Schools (SHS)
-  "Prempeh College", "Achimota School", "PRESEC Legon", "Wesley Girls' High School",
+  "St. Thomas Aquinas SHS","Prempeh College", "Achimota School", "PRESEC Legon", "Wesley Girls' High School",
   "Mfantsipim School", "Opoku Ware School", "St. Augustine's College", "Adisadel College",
   "Holy Child School", "Aburi Girls' Senior High School", "Accra Academy",
   "Pope John Senior High", "Keta Senior High Technical School (Ketasco)", 
