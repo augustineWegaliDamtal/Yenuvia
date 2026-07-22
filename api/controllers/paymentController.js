@@ -5,7 +5,7 @@ import Donation from "../models/donationModel.js";
 import School from "../models/School.js";
 import { errorHandler } from "../utils/error.js";
 import Notification from "../models/notificationModel.js";
-
+import crypto from "crypto";
 
 export const initiateDonationPayment = async (req, res, next) => {
   try {
@@ -268,4 +268,37 @@ export const awardVerification = async (req, res, next) => {
 
 export const unverifyVerification = async (req, res, next) => {
   // Your existing code to let Admins remove verification...
+};
+
+
+
+
+export const handlePaystackWebhook = async (req, res) => {
+  try {
+    // 1. Verify Paystack Signature
+    const hash = crypto
+      .createHmac("sha512", process.env.PAYSTACK_SECRET_KEY)
+      .update(JSON.stringify(req.body))
+      .digest("hex");
+
+    if (hash !== req.headers["x-paystack-signature"]) {
+      return res.status(400).send("Invalid signature");
+    }
+
+    // 2. Acknowledge receipt immediately to Paystack
+    res.sendStatus(200);
+
+    const event = req.body;
+
+    // 3. Handle successful payment event
+    if (event.event === "charge.success") {
+      const { reference, metadata } = event.data;
+      console.log(`✅ Payment confirmed via Webhook for Ref: ${reference}`);
+
+      // Perform DB updates here (e.g. credit donor, release artifact order, etc.)
+    }
+  } catch (error) {
+    console.error("Webhook processing error:", error.message);
+    res.status(500).send("Webhook Error");
+  }
 };

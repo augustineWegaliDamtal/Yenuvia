@@ -4,7 +4,7 @@ import { verifySuperAdmin, verifyToken } from "../utils/verifyUser.js";
 import { awardVerification, handlePaymentCallback, initiateVerificationPayment, unverifyVerification }
  from "../controllers/verificationController.js";
 import {  getArtistDonations, getArtistDonationTotal, getDonorDonations
-    , handleDonationCallback, initiateDonationPayment } from "../controllers/paymentController.js";
+    , handleDonationCallback, handlePaystackWebhook, initiateDonationPayment } from "../controllers/paymentController.js";
 
 
 const router = express.Router();
@@ -30,5 +30,6 @@ router.get("/donor/:id", getDonorDonations);
 // Get total donations for an artist
 router.get("/artist/:id/total", getArtistDonationTotal)
 
+router.post("/webhook", handlePaystackWebhook);
 
 export default router;
