@@ -8,7 +8,7 @@ const Terms = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-black min-h-screen pb-32 max-w-md mx-auto relative overflow-x-hidden text-zinc-300">
+    <div className="bg-black h-screen overflow-y-auto overflow-x-hidden max-w-md mx-auto relative text-zinc-300 pb-32 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-zinc-950 [&::-webkit-scrollbar-thumb]:bg-zinc-800 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-yellow-500/50">
       
       {/* HEADER */}
       <div className="pt-10 px-6 pb-6 border-b border-white/5 bg-zinc-950 relative">
@@ -78,6 +78,37 @@ const Terms = () => {
             </ul>
           </div>
         </motion.section>
+        {/* Section 3: Artifact Marketplace Refunds & Disputes */}
+<motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+  <div className="flex items-center gap-3 mb-3">
+    <Shield className="text-yellow-500" size={18} />
+    <h2 className="text-sm font-black uppercase text-white tracking-widest">
+      3. Artifact Marketplace & Dispute Policy
+    </h2>
+  </div>
+  <div className="bg-zinc-900/50 p-5 rounded-3xl border border-white/5 space-y-4 text-xs leading-relaxed text-zinc-400">
+    <div>
+      <h4 className="text-white font-bold uppercase text-[11px] mb-1">Buyer Non-Receipt Guarantee</h4>
+      <p>
+        If an ordered artifact is not delivered within the agreed delivery window, buyers can lodge a dispute within <strong>7 days</strong>. If the seller cannot provide official courier proof of dispatch, a full refund will be issued to the buyer's original payment method via Paystack.
+      </p>
+    </div>
+
+    <div>
+      <h4 className="text-white font-bold uppercase text-[11px] mb-1">Seller Dispatch Protection</h4>
+      <p>
+        Sellers are protected against fraudulent claims. Funds will be released to the seller once valid proof of dispatch or delivery confirmation from a recognized logistics provider is verified.
+      </p>
+    </div>
+
+    <div>
+      <h4 className="text-white font-bold uppercase text-[11px] mb-1">Damaged Items</h4>
+      <p>
+        For items damaged during transit, buyers must submit unboxing photo/video evidence to <strong>support@yenuvia.com</strong> within <strong>48 hours</strong> of receipt for review and replacement or refund processing.
+      </p>
+    </div>
+  </div>
+</motion.section>
 
         {/* Legal Footer */}
         <div className="pt-8 mt-8 border-t border-white/5 text-center">

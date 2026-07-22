@@ -501,6 +501,10 @@ const Profile = () => {
               
       <div className="mt-8 mx-6 pt-8 pb-10 border-t border-white/5 text-center">
         <div className="flex justify-center gap-6 text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-4">
+          <Link to="/about" className="hover:text-white transition-colors">
+            About Us
+          </Link>
+
           <Link to="/terms" className="hover:text-white transition-colors">
             Terms & Copyright
           </Link>
