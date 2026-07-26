@@ -439,7 +439,7 @@ export const resolveDispute = async (req, res, next) => {
       }
     }
 
-    // SCENARIO B: Admin rules for Buyer (Refund)
+   
     if (decision === 'refund_buyer') {
       const refundData = await paystackService.refundTransaction(order.paymentReference);
       
