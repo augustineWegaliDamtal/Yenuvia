@@ -290,12 +290,11 @@ export const confirmDeliveryAndReleaseFunds = async (req, res, next) => {
        return next(errorHandler(400, "Order amount is too small to cover Paystack's 1 GHS transfer fee."));
     }
 
-    // Deduct fee and convert strictly to pesewas for Paystack
+    // Pass actualPayoutGHS directly (service handles internal handling)
     const actualPayoutGHS = order.artistEarnings - PAYSTACK_TRANSFER_FEE_GHS;
-    const payoutInPesewas = Math.round(actualPayoutGHS * 100);
 
     const transferData = await paystackService.releaseFunds(
-      payoutInPesewas, 
+      actualPayoutGHS, 
       recipientData.data.recipient_code, 
       order._id
     );
@@ -311,7 +310,7 @@ export const confirmDeliveryAndReleaseFunds = async (req, res, next) => {
       await Notification.create({
         recipient: artist._id,
         sender: req.user._id, // Buyer
-        type: "system", // Or 'delivery'
+        type: "system", 
         message: notifMessage,
         relatedOrder: order._id
       });
@@ -389,7 +388,6 @@ export const disputeOrder = async (req, res, next) => {
   }
 };
 
-
 export const resolveDispute = async (req, res, next) => {
   try {
     // Ensure only admins can do this
@@ -415,7 +413,6 @@ export const resolveDispute = async (req, res, next) => {
         artist.momoNetwork
       );
       
-      // 🟢 APPLY THE SAME TRANSFER FEE & PESEWAS FIX HERE
       const PAYSTACK_TRANSFER_FEE_GHS = 1; 
       
       if (order.artistEarnings <= PAYSTACK_TRANSFER_FEE_GHS) {
@@ -423,10 +420,9 @@ export const resolveDispute = async (req, res, next) => {
       }
       
       const actualPayoutGHS = order.artistEarnings - PAYSTACK_TRANSFER_FEE_GHS;
-      const payoutInPesewas = Math.round(actualPayoutGHS * 100);
 
       const transferData = await paystackService.releaseFunds(
-        payoutInPesewas, recipientData.data.recipient_code, order._id
+        actualPayoutGHS, recipientData.data.recipient_code, order._id
       );
 
       if (transferData.status) {
@@ -439,7 +435,6 @@ export const resolveDispute = async (req, res, next) => {
       }
     }
 
-   
     if (decision === 'refund_buyer') {
       const refundData = await paystackService.refundTransaction(order.paymentReference);
       
