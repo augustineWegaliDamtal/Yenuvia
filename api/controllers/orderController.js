@@ -26,22 +26,18 @@ export const createCheckoutSession = async (req, res, next) => {
 
     const artist = await User.findById(work.artistId);
     
-    // 🟢 ESCROW FIX 1: Ensure they have MoMo details, NOT a subaccount code
+    // 🟢 ESCROW FIX 1: Ensure they have MoMo details
     if (!artist || !artist.momoNumber || !artist.momoNetwork) {
       return next(errorHandler(400, "This artist hasn't set up their MoMo payout profile yet."));
     }
 
     const amountInPesewas = Math.round(work.price * 100);
 
-    // 🟢 ESCROW FIX 2: Initialize transaction WITHOUT the subaccount field
+    // 🟢 ESCROW FIX 2: Initialize transaction 100% to Yenuvia's main balance
     const payment = await paystackService.initializeTransaction({
       email: req.user.email,
       amount: amountInPesewas,
-      
-      // subaccount: artist.paystackSubaccountCode, <-- REMOVED! 100% goes to Yenuvia's main balance now.
-      
       callback_url: `${process.env.BUYER_CLIENT_URL}/order/verify`,
-      
       metadata: {
         workId,
         buyerId,
@@ -287,8 +283,21 @@ export const confirmDeliveryAndReleaseFunds = async (req, res, next) => {
       return next(errorHandler(500, `Paystack refused MoMo registration: ${recipientData.message}`));
     }
 
+    // 🟢 ESCROW FIX: Paystack charges GHS 1 per MoMo Transfer. Deduct this from the artist payout so it doesn't fail.
+    const PAYSTACK_TRANSFER_FEE_GHS = 1; 
+    
+    if (order.artistEarnings <= PAYSTACK_TRANSFER_FEE_GHS) {
+       return next(errorHandler(400, "Order amount is too small to cover Paystack's 1 GHS transfer fee."));
+    }
+
+    // Deduct fee and convert strictly to pesewas for Paystack
+    const actualPayoutGHS = order.artistEarnings - PAYSTACK_TRANSFER_FEE_GHS;
+    const payoutInPesewas = Math.round(actualPayoutGHS * 100);
+
     const transferData = await paystackService.releaseFunds(
-      order.artistEarnings, recipientData.data.recipient_code, order._id
+      payoutInPesewas, 
+      recipientData.data.recipient_code, 
+      order._id
     );
 
     if (transferData.status) {
@@ -297,7 +306,7 @@ export const confirmDeliveryAndReleaseFunds = async (req, res, next) => {
       await order.save();
 
       // 🟢 6. NEW NOTIFICATION: Tell the artist they got paid!
-      const notifMessage = `GHS ${order.artistEarnings} has been sent to your MoMo!`;
+      const notifMessage = `GHS ${actualPayoutGHS} (after transfer fees) has been sent to your MoMo!`;
       
       await Notification.create({
         recipient: artist._id,
@@ -406,15 +415,25 @@ export const resolveDispute = async (req, res, next) => {
         artist.momoNetwork
       );
       
+      // 🟢 APPLY THE SAME TRANSFER FEE & PESEWAS FIX HERE
+      const PAYSTACK_TRANSFER_FEE_GHS = 1; 
+      
+      if (order.artistEarnings <= PAYSTACK_TRANSFER_FEE_GHS) {
+         return next(errorHandler(400, "Order amount is too small to cover Paystack's 1 GHS transfer fee."));
+      }
+      
+      const actualPayoutGHS = order.artistEarnings - PAYSTACK_TRANSFER_FEE_GHS;
+      const payoutInPesewas = Math.round(actualPayoutGHS * 100);
+
       const transferData = await paystackService.releaseFunds(
-        order.artistEarnings, recipientData.data.recipient_code, order._id
+        payoutInPesewas, recipientData.data.recipient_code, order._id
       );
 
       if (transferData.status) {
         order.escrowStatus = 'released';
         order.status = 'delivered';
         await order.save();
-        return res.status(200).json({ success: true, message: "Dispute resolved: Funds released to artist." });
+        return res.status(200).json({ success: true, message: `Dispute resolved: GHS ${actualPayoutGHS} released to artist.` });
       } else {
         return next(errorHandler(500, "Paystack transfer failed."));
       }
