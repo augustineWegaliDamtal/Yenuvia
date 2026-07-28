@@ -186,8 +186,9 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalU
     e?.preventDefault(); 
     e?.stopPropagation();
     if (!activeUser) return navigate("/signin");
-    if (!activeUser.ghanaCardVerified) setShowIdModal(true);
-    else navigate(`/work/${post._id}`);
+    
+    // 🚀 Bypassed Smile ID verification temporarily; direct users straight to checkout/artwork page
+    navigate(`/work/${post._id}`);
   };
 
   const togglePlay = (e) => {
@@ -453,6 +454,7 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalU
             <button type="button" onClick={handleSecureBuy} className={`p-2 rounded-full backdrop-blur-md active:scale-90 transition-transform drop-shadow-lg ${post.isSold ? "bg-black/40 text-white/50" : "bg-yellow-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.3)]"}`}>
               <ShoppingBag size={22} />
             </button>
+            <span className="text-white text-[11px] font-bold drop-shadow-md">Buy</span>
           </div>
         )}
 
