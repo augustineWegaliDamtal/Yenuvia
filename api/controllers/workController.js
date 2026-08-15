@@ -319,7 +319,9 @@ export const getUserWorks = async (req, res, next) => {
 export const getWorkById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const work = await Work.findById(id).populate("artistId", "username avatar verified school");
+    const work = await Work.findById(id)
+    .populate("artistId", "username avatar verified school")
+    .populate("commentsList.user", "username avatar verified");
     if (!work) return next(errorHandler(404, 'Work not found'));
     res.status(200).json({ success: true, work });
   } catch (error) {
