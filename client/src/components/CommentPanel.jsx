@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Trash2, Loader2, MessageCircle, AlertCircle, Reply } from "lucide-react";
@@ -13,9 +13,29 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
   const [comments, setComments] = useState(post.commentsList || []);
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingComments, setIsLoadingComments] = useState(true);
   
-  // 🚀 NEW: Ref to target the input field when replying
   const inputRef = useRef(null);
+
+  // Fetch fresh, populated comments the exact moment the panel opens
+  useEffect(() => {
+    const fetchFreshComments = async () => {
+      try {
+        const res = await customFetch(`/api/work/${post._id}`);
+        const data = await res.json();
+        if (data.success && data.post) {
+          setComments(data.post.commentsList || []);
+          if (onCommentUpdate) onCommentUpdate(data.post.commentsList || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch fresh comments:", err);
+      } finally {
+        setIsLoadingComments(false);
+      }
+    };
+
+    fetchFreshComments();
+  }, [post._id]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,10 +84,8 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
     }
   };
 
-  // 🚀 NEW: Handle clicking the Reply button
   const handleReplyClick = (username) => {
     setNewComment(`@${username} `);
-    // Add a tiny delay to ensure React updates the state before focusing
     setTimeout(() => {
       if (inputRef.current) {
         inputRef.current.focus();
@@ -92,7 +110,7 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
           exit={{ y: "100%" }}
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
           onClick={stopPropagation}
-          className="w-full max-w-md bg-zinc-950 border-t border-white/10 rounded-t-[2.5rem] shadow-[0_-20px_50px_rgba(0,0,0,0.8)] h-[80vh] flex flex-col overflow-hidden"
+          className="w-full max-w-md bg-zinc-950 border-t border-white/10 rounded-t-[2.5rem] shadow-[0_-20px_50px_rgba(0,0,0,0.8)] h-[85vh] flex flex-col overflow-hidden relative"
         >
           {/* Header */}
           <div className="flex justify-between items-center p-6 border-b border-white/5 bg-zinc-950 shrink-0">
@@ -107,7 +125,11 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
 
           {/* Scrollable Comments List */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
-            {comments.length === 0 ? (
+            {isLoadingComments ? (
+              <div className="h-full flex items-center justify-center">
+                <Loader2 size={32} className="animate-spin text-yellow-500" />
+              </div>
+            ) : comments.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
                 <MessageCircle size={40} className="text-gray-600 mb-4" />
                 <p className="text-white text-sm font-bold uppercase tracking-widest">No comments yet</p>
@@ -125,7 +147,7 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
                     key={comment._id || index}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="flex gap-4 group"
+                    className="flex gap-4"
                   >
                     <Link to={commenterId ? `/profile/${commenterId}` : "#"} className="shrink-0">
                       <img 
@@ -136,36 +158,23 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
                     </Link>
                     
                     <div className="flex-1">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-between">
                         <Link to={commenterId ? `/profile/${commenterId}` : "#"}>
                           <span className="text-white font-bold text-xs hover:text-yellow-500 hover:underline transition-colors">
                             @{commenterName}
                           </span>
                         </Link>
 
-                        {/* 🚀 NEW: Reply Action Bar */}
-                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {activeUser && (
-                            <button 
-                              onClick={() => handleReplyClick(commenterName)}
-                              className="text-gray-500 hover:text-yellow-500 transition-colors flex items-center gap-1 text-[9px] font-bold uppercase"
-                            >
-                              <Reply size={10} /> Reply
-                            </button>
-                          )}
-
-                          {activeUser && commenterId === activeUser._id && (
-                            <button 
-                              onClick={() => handleDelete(comment._id)} 
-                              className="text-gray-600 hover:text-red-500 transition-colors ml-2"
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          )}
-                        </div>
+                        {activeUser && commenterId === activeUser._id && (
+                          <button 
+                            onClick={() => handleDelete(comment._id)} 
+                            className="text-gray-600 hover:text-red-500 transition-colors p-1"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
                       </div>
                       
-                      {/* 🚀 NEW: Stylized Mentions in the text body */}
                       <p className="text-gray-300 text-sm mt-1 leading-snug">
                         {comment.text.split(' ').map((word, i) => 
                           word.startsWith('@') ? (
@@ -175,6 +184,17 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
                           )
                         )}
                       </p>
+
+                      {activeUser && (
+                        <div className="mt-2 flex items-center gap-4">
+                          <button 
+                            onClick={() => handleReplyClick(commenterName)}
+                            className="text-gray-500 hover:text-yellow-500 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider"
+                          >
+                            <Reply size={12} /> Reply
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 );
@@ -183,7 +203,7 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
           </div>
 
           {/* Input Area */}
-          <div className="p-4 pb-6 mb-[env(safe-area-inset-bottom)] bg-zinc-950 border-t border-white/5 shrink-0">
+          <div className="p-4 pb-24 md:pb-6 bg-zinc-950 border-t border-white/5 shrink-0 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
             {activeUser ? (
               <form 
                 onSubmit={handleSubmit} 
