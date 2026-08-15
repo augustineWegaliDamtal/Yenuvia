@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Virtuoso } from "react-virtuoso";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion"; // 🔥 ADDED
 
 import Billboard from "../components/Billboard";
 import FeedCard from "../components/FeedCard";
@@ -22,7 +23,11 @@ import { updateVerificationStatus } from "../redux/users/artistSlice";
 
 const EMPTY_LEADERBOARD = [];
 
-// 🏢 STATIC COMPONENTS (Defined outside to prevent unmounting & scroll jumping)
+// 🔥 PULL-TO-REFRESH CONSTANTS
+const PULL_THRESHOLD = 80;
+const DAMPING = 0.4;
+
+// 🏢 STATIC COMPONENTS
 const CustomScroller = React.forwardRef((props, ref) => (
   <div
     {...props}
@@ -70,6 +75,10 @@ const ForYou = ({ activeTab }) => {
   const [sharingPost, setSharingPost] = useState(null);
   const [liveUpdateTrigger, setLiveUpdateTrigger] = useState(0);
   
+  // 🔥 PULL-TO-REFRESH STATE
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   const scrollContainerRef = useRef(null);
   const isFetchingRef = useRef(false);
   const feedPostsRef = useRef(feedPosts);
@@ -149,14 +158,12 @@ const ForYou = ({ activeTab }) => {
   useEffect(() => {
     if (!socket) return;
 
-    // 🗑️ 1. Handle Removals/Deletions
     const handleItemRemoved = (data) => {
       const idToRemove = String(data?.workId || data?._id || data?.id || data);
       const currentPosts = feedPostsRef.current;
       dispatch(SET_FEED_POSTS(currentPosts.filter((p) => String(p._id) !== idToRemove)));
     };
 
-    // ⚡ 2. Handle Live Work Verifications & Content Updates
     const handleItemUpdated = (data) => {
       const updatedPost = data?.work || data?.post || data;
       if (!updatedPost || !updatedPost._id) return;
@@ -177,57 +184,47 @@ const ForYou = ({ activeTab }) => {
     };
 
     const handleArtistVerificationUpdated = ({ artistId, verified }) => {
-  console.log(`⚡ Live verification update for artist ${artistId}:`, verified);
+      const targetId = String(artistId);
 
-  const targetId = String(artistId);
+      if (activeUser && String(activeUser._id) === targetId) {
+        dispatch(updateVerificationStatus(verified));
+      }
 
-  // 1. IF THE LOGGED-IN ARTIST IS THE ONE BEING (UN)VERIFIED -> UPDATE PROFILE
-  if (activeUser && String(activeUser._id) === targetId) {
-    dispatch(updateVerificationStatus(verified));
-  }
+      const currentPosts = feedPostsRef.current;
+      const updatedPosts = currentPosts.map((post) => {
+        const postArtistId = String(
+          post.artistId?._id || post.artistId || post.user?._id || post.user || ""
+        );
 
-  // 2. UPDATE ALL POSTS IN THE FEED STREAM INSTANTLY
-  const currentPosts = feedPostsRef.current;
-  const updatedPosts = currentPosts.map((post) => {
-    const postArtistId = String(
-      post.artistId?._id || post.artistId || post.user?._id || post.user || ""
-    );
+        if (postArtistId === targetId) {
+          return {
+            ...post,
+            artistId: typeof post.artistId === "object" && post.artistId !== null
+              ? { ...post.artistId, verified }
+              : { _id: post.artistId, verified },
+          };
+        }
+        return post;
+      });
 
-    if (postArtistId === targetId) {
-      return {
-        ...post,
-        artistId: typeof post.artistId === "object" && post.artistId !== null
-          ? { ...post.artistId, verified }
-          : { _id: post.artistId, verified },
-      };
-    }
-    return post;
-  });
+      dispatch(SET_FEED_POSTS(updatedPosts));
+    };
 
-  // Pushes updated feed array back to artistworkSlice
-  dispatch(SET_FEED_POSTS(updatedPosts));
-};
-
-socket.on("artist_verification_updated", handleArtistVerificationUpdated);
-
-
-    // Turn on listeners
     socket.on("work_removed_from_feed", handleItemRemoved);
     socket.on("work_deleted", handleItemRemoved);
     socket.on("work_verified", handleItemUpdated);
     socket.on("work_updated", handleItemUpdated);
-    socket.on("artist_verification_updated", handleArtistVerificationUpdated); // 👈 LISTEN TO YOUR BACKEND EVENT
+    socket.on("artist_verification_updated", handleArtistVerificationUpdated);
 
     return () => {
-      // Clean up listeners
       socket.off("work_removed_from_feed", handleItemRemoved);
       socket.off("work_deleted", handleItemRemoved);
       socket.off("work_verified", handleItemUpdated);
       socket.off("work_updated", handleItemUpdated);
-      socket.off("artist_verification_updated", handleArtistVerificationUpdated); // 👈 CLEAN UP
+      socket.off("artist_verification_updated", handleArtistVerificationUpdated);
     };
-  }, [socket, dispatch, optimizeCloudinaryUrl]);
-  // Redux Optimistic Like Action Handler
+  }, [socket, dispatch, optimizeCloudinaryUrl, activeUser]);
+
   const handleLike = useCallback(async (postId) => {
     if (!activeUser) return;
     const targetPost = feedPostsRef.current.find((p) => p._id === postId);
@@ -259,32 +256,64 @@ socket.on("artist_verification_updated", handleArtistVerificationUpdated);
   }, [activeUser, dispatch, fetchPosts]);
 
   const handleCommentGlobalUpdate = useCallback((postId, updatedCommentsArray) => {
-  const targetPost = feedPostsRef.current.find((p) => p._id === postId);
-  if (!targetPost) return;
+    const targetPost = feedPostsRef.current.find((p) => p._id === postId);
+    if (!targetPost) return;
 
-  // Dispatch directly to your existing Redux action to update the global cache
-  dispatch(UPDATE_SINGLE_POST({
-    ...targetPost,
-    commentsList: updatedCommentsArray
-  }));
-}, [dispatch]);
+    dispatch(UPDATE_SINGLE_POST({
+      ...targetPost,
+      commentsList: updatedCommentsArray
+    }));
+  }, [dispatch]);
 
-  // Pull down interaction triggers
+  // 🔥 ADVANCED PULL-TO-REFRESH PHYSICS
   const handleTouchStart = (e) => {
-    touchStartRef.current = e.touches[0].clientY;
+    const container = scrollContainerRef.current;
+    const isAtTop = container ? container.scrollTop <= 0 : true;
+    
+    if (isAtTop && !isRefreshing) {
+      touchStartRef.current = e.touches[0].clientY;
+    } else {
+      touchStartRef.current = 0;
+    }
   };
 
   const handleTouchMove = (e) => {
-    const container = scrollContainerRef.current;
-    if (!container || isFetchingRef.current) return;
-
-    const startY = touchStartRef.current;
-    const currentY = e.touches[0].clientY;
+    if (touchStartRef.current === 0 || isRefreshing) return;
     
-    if (container.scrollTop <= 0 && currentY - startY > 150) {
-      touchStartRef.current = currentY; 
-      setLiveUpdateTrigger((prev) => prev + 1);
+    const container = scrollContainerRef.current;
+    const isAtTop = container ? container.scrollTop <= 0 : true;
+    if (!isAtTop) return;
+
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - touchStartRef.current;
+
+    if (deltaY > 0) {
+      // Apply physical friction to the drag distance
+      const damped = Math.min(deltaY * DAMPING, 120);
+      setPullDistance(damped);
     }
+  };
+
+  const handleTouchEnd = async () => {
+    if (touchStartRef.current === 0 || isRefreshing) return;
+
+    if (pullDistance >= PULL_THRESHOLD) {
+      setIsRefreshing(true);
+      setPullDistance(65); // Snap loader in place
+
+      try {
+        await fetchPosts(1, true);
+      } catch (error) {
+        console.error("Pull-to-refresh failed:", error);
+      } finally {
+        setIsRefreshing(false);
+        setPullDistance(0);
+      }
+    } else {
+      setPullDistance(0); // Snap back to top if not pulled far enough
+    }
+    
+    touchStartRef.current = 0;
   };
 
   const virtualItems = useMemo(() => {
@@ -310,71 +339,108 @@ socket.on("artist_verification_updated", handleArtistVerificationUpdated);
   }, [feedPosts, activeTab, activeUser]); 
 
   return (
-    // ✅ TOUCH EVENTS MOVED HERE: Captures gestures safely through event bubbling
     <div 
-      className="w-full h-[100dvh] bg-black relative"
+      className="w-full h-[100dvh] bg-black relative select-none"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
-      {activeTab === "forYou" ? (
-        <Virtuoso
-          style={{ height: "100%", width: "100%" }} 
-          data={virtualItems}
-          computeItemKey={(index, item) => item._virtualId}
-          scrollerRef={(ref) => { scrollContainerRef.current = ref; }}
-          overscan={1000} 
-          defaultItemHeight={typeof window !== "undefined" ? window.innerHeight : 800}
-          
-          increaseViewportBy={{ 
-            top: typeof window !== "undefined" ? window.innerHeight : 800, 
-            bottom: typeof window !== "undefined" ? window.innerHeight : 800 
-          }}
-          
-          endReached={() => {
-            if (hasMore && !isFetchingRef.current) {
-              const nextPage = page + 1;
-              setPage(nextPage);
-              fetchPosts(nextPage);
-            }
-          }}
-          
-          // ✅ STABLE CONFIG: Virtuoso won't thrash DOM nodes on state changes anymore
-          components={VIRTUOSO_COMPONENTS}
-          context={{ loading, feedPostsLength: feedPosts.length }}
-
-          itemContent={(index, item) => {
-            if (item.type === "billboard") {
-              return (
-                <div className="snap-start snap-always h-[100dvh] w-full flex-none flex flex-col justify-center bg-black relative overflow-hidden">
-                  <Billboard liveUpdateTrigger={liveUpdateTrigger} />
-                  <div className="absolute bottom-40 left-1/2 -translate-x-1/2 animate-bounce z-50">
-                    <p className="text-[10px] text-white/30 font-black uppercase tracking-[0.3em]">Swipe Up</p>
-                  </div>
-                </div>
-              );
-            }
-
-            if (item.type === "derby") {
-              return (
-                <div className="feed-card-wrapper snap-start snap-always h-screen w-full flex-none flex flex-col justify-center items-center bg-black relative overflow-hidden">
-                  <DerbySnapshotCard liveUpdateTrigger={liveUpdateTrigger} />
-                </div>
-              );
-            }
-
-            return (
-              <div className="feed-card-wrapper snap-start snap-always h-[100dvh] w-full flex-none flex flex-col justify-center items-center bg-black relative overflow-hidden">
-                <FeedCard
-                  post={item}
-                  leaderboard={leaderboard} 
-                  handleLike={handleLike}
-                  handleShare={(postToShare) => setSharingPost(postToShare)} 
-                  onCommentGlobalUpdate={handleCommentGlobalUpdate}
+      {/* 🔥 THE TIKTOK PULL INDICATOR */}
+      <div 
+        className="absolute top-0 inset-x-0 z-50 flex items-center justify-center pointer-events-none"
+        style={{
+          transform: `translateY(${pullDistance}px)`,
+          transition: isRefreshing ? "transform 0.2s ease-out" : "none"
+        }}
+      >
+        <AnimatePresence>
+          {(pullDistance > 10 || isRefreshing) && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              className="mt-4 bg-zinc-900/90 border border-white/20 text-yellow-500 p-3 rounded-full shadow-2xl backdrop-blur-md flex items-center justify-center"
+            >
+              {isRefreshing ? (
+                <Loader2 size={22} className="animate-spin text-yellow-500" />
+              ) : (
+                <RefreshCw 
+                  size={20} 
+                  style={{
+                    transform: `rotate(${Math.min(pullDistance * 3, 360)}deg)`,
+                    transition: "transform 0.1s linear"
+                  }}
+                  className={pullDistance >= PULL_THRESHOLD ? "text-yellow-400 scale-110" : "text-white/70"}
                 />
-              </div>
-            );
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {activeTab === "forYou" ? (
+        // 🔥 WRAPPED VIRTUOSO IN A DIV THAT PULLS DOWN VISUALLY
+        <div 
+          className="w-full h-full"
+          style={{
+            transform: `translateY(${pullDistance * 0.5}px)`, // Parallax pull effect
+            transition: isRefreshing ? "transform 0.2s ease-out" : "none"
           }}
-        />
+        >
+          <Virtuoso
+            style={{ height: "100%", width: "100%" }} 
+            data={virtualItems}
+            computeItemKey={(index, item) => item._virtualId}
+            scrollerRef={(ref) => { scrollContainerRef.current = ref; }}
+            overscan={1000} 
+            defaultItemHeight={typeof window !== "undefined" ? window.innerHeight : 800}
+            increaseViewportBy={{ 
+              top: typeof window !== "undefined" ? window.innerHeight : 800, 
+              bottom: typeof window !== "undefined" ? window.innerHeight : 800 
+            }}
+            endReached={() => {
+              if (hasMore && !isFetchingRef.current) {
+                const nextPage = page + 1;
+                setPage(nextPage);
+                fetchPosts(nextPage);
+              }
+            }}
+            components={VIRTUOSO_COMPONENTS}
+            context={{ loading, feedPostsLength: feedPosts.length }}
+            itemContent={(index, item) => {
+              if (item.type === "billboard") {
+                return (
+                  <div className="snap-start snap-always h-[100dvh] w-full flex-none flex flex-col justify-center bg-black relative overflow-hidden">
+                    <Billboard liveUpdateTrigger={liveUpdateTrigger} />
+                    <div className="absolute bottom-40 left-1/2 -translate-x-1/2 animate-bounce z-50">
+                      <p className="text-[10px] text-white/30 font-black uppercase tracking-[0.3em]">Swipe Up</p>
+                    </div>
+                  </div>
+                );
+              }
+
+              if (item.type === "derby") {
+                return (
+                  <div className="feed-card-wrapper snap-start snap-always h-screen w-full flex-none flex flex-col justify-center items-center bg-black relative overflow-hidden">
+                    <DerbySnapshotCard liveUpdateTrigger={liveUpdateTrigger} />
+                  </div>
+                );
+              }
+
+              return (
+                <div className="feed-card-wrapper snap-start snap-always h-[100dvh] w-full flex-none flex flex-col justify-center items-center bg-black relative overflow-hidden">
+                  <FeedCard
+                    post={item}
+                    leaderboard={leaderboard} 
+                    handleLike={handleLike}
+                    handleShare={(postToShare) => setSharingPost(postToShare)} 
+                    onCommentGlobalUpdate={handleCommentGlobalUpdate}
+                  />
+                </div>
+              );
+            }}
+          />
+        </div>
       ) : activeTab === "schools" ? (
         <div className="h-full w-full overflow-y-auto scrollbar-hide bg-black">
           <Schools />

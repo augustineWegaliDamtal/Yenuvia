@@ -1,11 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Trash2, Loader2, MessageCircle, AlertCircle } from "lucide-react";
+import { X, Send, Trash2, Loader2, MessageCircle, AlertCircle, Reply } from "lucide-react";
 import { Link } from "react-router-dom";
 import customFetch from "../util/customFetch.js";
 
-// ✅ ADDED onCommentUpdate PROP
 const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
   const regularUser = useSelector((state) => state.user?.currentUser);
   const artistUser = useSelector((state) => state.artist?.currentUserArtist);
@@ -14,8 +13,10 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
   const [comments, setComments] = useState(post.commentsList || []);
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // 🚀 NEW: Ref to target the input field when replying
+  const inputRef = useRef(null);
 
-  // 🚀 POST A COMMENT
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newComment.trim() || isSubmitting || !activeUser) return;
@@ -35,12 +36,7 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
       if (data.success) {
         setComments(data.data.commentsList);
         setNewComment(""); 
-        
-        // 🔥 THE FIX: Pass the FULL array back to the parent, not just the length!
-        // The parent feed component needs to update its state with this new array.
         if (onCommentUpdate) onCommentUpdate(data.data.commentsList);
-      } else {
-        console.error("Server rejected comment:", data.message);
       }
     } catch (err) {
       console.error("Comment failed:", err);
@@ -49,29 +45,34 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
     }
   };
 
-  // 🗑️ DELETE A COMMENT
   const handleDelete = async (commentId) => {
     try {
       const res = await customFetch(`/api/work/${post._id}/comment/${commentId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${activeUser?.token}`,
-        },
+        headers: { Authorization: `Bearer ${activeUser?.token}` },
       });
       const data = await res.json();
       if (data.success) {
         setComments((prev) => {
           const newComments = prev.filter((c) => c._id !== commentId);
-          
-          // 🔥 THE FIX: Pass the FULL filtered array back to the parent!
           if (onCommentUpdate) onCommentUpdate(newComments);
-          
           return newComments;
         });
       }
     } catch (err) {
       console.error("Delete failed:", err);
     }
+  };
+
+  // 🚀 NEW: Handle clicking the Reply button
+  const handleReplyClick = (username) => {
+    setNewComment(`@${username} `);
+    // Add a tiny delay to ensure React updates the state before focusing
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 50);
   };
 
   const stopPropagation = (e) => e.stopPropagation();
@@ -93,7 +94,7 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
           onClick={stopPropagation}
           className="w-full max-w-md bg-zinc-950 border-t border-white/10 rounded-t-[2.5rem] shadow-[0_-20px_50px_rgba(0,0,0,0.8)] h-[80vh] flex flex-col overflow-hidden"
         >
-          {/* 1. Header */}
+          {/* Header */}
           <div className="flex justify-between items-center p-6 border-b border-white/5 bg-zinc-950 shrink-0">
             <h3 className="font-black italic text-white uppercase tracking-widest text-sm flex items-center gap-2">
               <MessageCircle size={16} className="text-yellow-500" />
@@ -104,7 +105,7 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
             </button>
           </div>
 
-          {/* 2. Scrollable Comments List */}
+          {/* Scrollable Comments List */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
             {comments.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
@@ -113,45 +114,83 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
                 <p className="text-[10px] text-yellow-500 font-black uppercase mt-2">Be the first to spark the rivalry</p>
               </div>
             ) : (
-              comments.map((comment, index) => (
-                <motion.div 
-                  key={comment._id || index}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex gap-4 group"
-                >
-                  <img 
-                    src={comment.user?.avatar || "/default-avatar.png"} 
-                    alt="avatar" 
-                    className="w-8 h-8 rounded-full object-cover border border-white/10 shrink-0" 
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-white font-bold text-xs">@{comment.user?.username || "YenuviaGuest"}</span>
-                      {activeUser && comment.user?._id === activeUser._id && (
-                        <button 
-                          onClick={() => handleDelete(comment._id)} 
-                          className="text-gray-600 hover:text-red-500 transition-colors"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      )}
+              comments.map((comment, index) => {
+                const commenter = comment.user || comment.userId || comment.author || {};
+                const commenterId = commenter._id;
+                const commenterName = commenter.username || "YenuviaGuest";
+                const commenterAvatar = commenter.avatar || commenter.profilePicture || "/default-avatar.png";
+
+                return (
+                  <motion.div 
+                    key={comment._id || index}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex gap-4 group"
+                  >
+                    <Link to={commenterId ? `/profile/${commenterId}` : "#"} className="shrink-0">
+                      <img 
+                        src={commenterAvatar} 
+                        alt="avatar" 
+                        className="w-8 h-8 rounded-full object-cover border border-white/10 hover:border-yellow-500 transition-colors" 
+                      />
+                    </Link>
+                    
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        <Link to={commenterId ? `/profile/${commenterId}` : "#"}>
+                          <span className="text-white font-bold text-xs hover:text-yellow-500 hover:underline transition-colors">
+                            @{commenterName}
+                          </span>
+                        </Link>
+
+                        {/* 🚀 NEW: Reply Action Bar */}
+                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {activeUser && (
+                            <button 
+                              onClick={() => handleReplyClick(commenterName)}
+                              className="text-gray-500 hover:text-yellow-500 transition-colors flex items-center gap-1 text-[9px] font-bold uppercase"
+                            >
+                              <Reply size={10} /> Reply
+                            </button>
+                          )}
+
+                          {activeUser && commenterId === activeUser._id && (
+                            <button 
+                              onClick={() => handleDelete(comment._id)} 
+                              className="text-gray-600 hover:text-red-500 transition-colors ml-2"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* 🚀 NEW: Stylized Mentions in the text body */}
+                      <p className="text-gray-300 text-sm mt-1 leading-snug">
+                        {comment.text.split(' ').map((word, i) => 
+                          word.startsWith('@') ? (
+                            <span key={i} className="text-yellow-500 font-semibold">{word} </span>
+                          ) : (
+                            word + ' '
+                          )
+                        )}
+                      </p>
                     </div>
-                    <p className="text-gray-300 text-sm mt-1 leading-snug">{comment.text}</p>
-                  </div>
-                </motion.div>
-              ))
+                  </motion.div>
+                );
+              })
             )}
           </div>
 
-          {/* 3. Input Area */}
-          <div className="p-4 bg-zinc-950 border-t border-white/5 shrink-0 pb-24">
+          {/* Input Area */}
+          <div className="p-4 pb-6 mb-[env(safe-area-inset-bottom)] bg-zinc-950 border-t border-white/5 shrink-0">
             {activeUser ? (
               <form 
                 onSubmit={handleSubmit} 
                 className="flex items-center gap-2 bg-zinc-900 border border-white/10 rounded-full p-2 pl-4 shadow-xl"
               >
                 <input
+                  ref={inputRef}
                   type="text"
                   placeholder="Add to the rivalry..."
                   value={newComment}
@@ -175,7 +214,7 @@ const CommentPanel = ({ post, onClose, onCommentUpdate }) => {
                 <Link 
                   to="/sign-in" 
                   onClick={onClose}
-                  className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-colors"
+                  className="bg-white/10 hover:bg-yellow-500 hover:text-black text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-colors"
                 >
                   Join Yenuvia
                 </Link>

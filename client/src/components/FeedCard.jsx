@@ -50,7 +50,6 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalU
     setLocalComments(post.commentsList || []); 
   }, [post.likedBy, post.likes, post.shares, post.commentsList, activeUser]);
 
-  // 🔥 FIX: Explicitly re-sync follow state when activeUser finishes loading asynchronously
   useEffect(() => {
     const currentUserId = activeUser?._id;
     const followersList = post.artistId?.followers || [];
@@ -62,11 +61,15 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalU
     }
   }, [post.artistId?.followers, activeUser?._id]);
 
-  // 🔥 FIX: Clean visibility variables isolated outside the JSX stream to prevent the undefined equality trap
   const loggedInUserId = activeUser?._id;
   const postArtistId = post.artistId?._id || post.artistId;
   const isOwnPost = loggedInUserId && postArtistId && String(loggedInUserId) === String(postArtistId);
   const shouldShowFollowButton = postArtistId && !isOwnPost;
+
+  // 🔥 THE FIX: Smart variables for Profile Picture and Name to handle all database formats
+  const authorDisplayPic = post.artistId?.avatar || post.artistId?.profilePicture || post.artistId?.profilePic || post.user?.profilePicture || post.user?.avatar || null;
+  const authorDisplayName = post.artistId?.name || post.artistId?.username || post.user?.name || post.user?.username || post.artistName;
+  const authorIsVerified = post.artistId?.verified || post.user?.verified;
 
   // Cloudinary Optimization Engine
   const slides = useMemo(() => {
@@ -167,7 +170,7 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalU
       link.href = blobUrl;
       
       const extension = currentMedia.type === 'video' ? 'mp4' : 'jpg';
-      const cleanName = (post.artistName || post.artistId?.username || 'Artwork').replace(/\s+/g, '-');
+      const cleanName = (authorDisplayName || 'Artwork').replace(/\s+/g, '-');
       link.download = `Arena-${cleanName}.${extension}`; 
       
       document.body.appendChild(link);
@@ -186,8 +189,6 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalU
     e?.preventDefault(); 
     e?.stopPropagation();
     if (!activeUser) return navigate("/signin");
-    
-    // 🚀 Bypassed Smile ID verification temporarily; direct users straight to checkout/artwork page
     navigate(`/work/${post._id}`);
   };
 
@@ -231,7 +232,7 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalU
     try {
       if (navigator.share) {
         await navigator.share({
-          title: post.artistName || post.artistId?.username || "Check out this art!",
+          title: authorDisplayName || "Check out this art!",
           text: post.description,
           url: `${window.location.origin}/work/${post._id}`,
         });
@@ -252,7 +253,7 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalU
     e?.preventDefault(); 
     e?.stopPropagation(); 
     if (!activeUser) return navigate("/signin");
-    navigate(`/artist/${post.artistId?._id || post.artistId}`);
+    navigate(`/artist/${postArtistId}`);
   };
 
   const onDoubleTap = useCallback((e) => {
@@ -282,8 +283,7 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalU
     setIsFollowing(!isFollowing);
 
     try {
-      const targetId = post.artistId?._id || post.artistId;
-      const res = await customFetch(`/api/user/follow/${targetId}`, {
+      const res = await customFetch(`/api/user/follow/${postArtistId}`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${activeUser.token}` }
       });
@@ -306,7 +306,6 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalU
           {slides.map((file, index) => (
             <div key={index} className="w-full flex-shrink-0 h-full snap-center snap-always relative">
               {file.type === "video" ? (
-                // 🔥 THE FIX: Flex center layouts forcefully override top alignment offsets across all rendering layouts
                 <div className="relative w-full h-full flex items-center justify-center bg-black">
                   {isVideoBuffering && index === activeSlide && isInView && (
                     <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
@@ -328,7 +327,6 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalU
                     onCanPlay={() => setIsVideoBuffering(false)}
                     onWaiting={() => setIsVideoBuffering(true)}
                     onPlaying={() => setIsVideoBuffering(false)}
-                    // 🔥 THE FIX: Dropped absolute tracking for perfect dynamic constraints
                     className="w-full max-h-full object-contain pointer-events-none" 
                     style={{ transform: "translateZ(0)", willChange: "transform" }}
                   />
@@ -396,21 +394,21 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalU
         <div className="relative">
           <div onClick={handleProfileClick} className="block active:scale-90 transition-transform cursor-pointer">
             <div className="w-11 h-11 rounded-full border border-white/40 p-[2px] bg-black/40 backdrop-blur-sm shadow-xl overflow-hidden">
-              {post.artistId?.avatar ? (
-                <img src={post.artistId.avatar} className="w-full h-full object-cover rounded-full" alt="avatar" />
+              {/* 🔥 THE FIX: Using the smart authorDisplayPic variable here */}
+              {authorDisplayPic ? (
+                <img src={authorDisplayPic} className="w-full h-full object-cover rounded-full" alt="avatar" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-zinc-400"><User size={20}/></div>
               )}
             </div>
           </div>
 
-          {post.artistId?.verified && (
-  <div className="absolute -bottom-1 -right-1 z-40 bg-black rounded-full p-[2px] shadow-lg pointer-events-none">
-    <VerifiedBadge size={14} color="gold" verified={true} />
-  </div>
-)}
+          {authorIsVerified && (
+            <div className="absolute -bottom-1 -right-1 z-40 bg-black rounded-full p-[2px] shadow-lg pointer-events-none">
+              <VerifiedBadge size={14} color="gold" verified={true} />
+            </div>
+          )}
 
-          {/* 🔥 THE FIX: Sanitized conditional check cleanly rendering the follow button */}
           {shouldShowFollowButton && (
             <button 
               type="button"
@@ -476,11 +474,12 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalU
         
         <div onClick={handleProfileClick} className="block mb-1 cursor-pointer">
           <h3 className="text-white font-bold text-[15px] drop-shadow-md flex items-center gap-1.5 flex-nowrap">
-  <span>{post.artistName || post.artistId?.username}</span>
-  {post.artistId?.verified && (
-  <VerifiedBadge size={15} verified={true} className="ml-1" />
-)}
-</h3>
+            {/* 🔥 THE FIX: Using the smart authorDisplayName variable here */}
+            <span>{authorDisplayName}</span>
+            {authorIsVerified && (
+              <VerifiedBadge size={15} verified={true} className="ml-1" />
+            )}
+          </h3>
         </div>
 
         <div className="mb-3 bg-black/40 backdrop-blur-sm p-2.5 rounded-xl border border-white/10 shadow-lg inline-block w-full">
@@ -538,15 +537,21 @@ const FeedCard = ({ post, handleLike, handleShare, leaderboard, onCommentGlobalU
   );
 };
 
+// 🔥 THE FIX: Updated React.memo to watch for name and avatar changes!
 export default React.memo(FeedCard, (prevProps, nextProps) => {
   return (
     prevProps.post._id === nextProps.post._id &&
     prevProps.post.likes === nextProps.post.likes &&
     prevProps.post.shares === nextProps.post.shares &&
-    // 🔥 NEW: Tell the card to re-render if the post status changes
     prevProps.post.status === nextProps.post.status && 
-    // 🔥 NEW: Tell the card to re-render if the artist gets verified
     prevProps.post.artistId?.verified === nextProps.post.artistId?.verified &&
+    prevProps.post.user?.verified === nextProps.post.user?.verified &&
+    // Check for Name updates
+    prevProps.post.artistId?.name === nextProps.post.artistId?.name &&
+    prevProps.post.artistId?.username === nextProps.post.artistId?.username &&
+    // Check for Profile Pic updates
+    prevProps.post.artistId?.avatar === nextProps.post.artistId?.avatar &&
+    prevProps.post.artistId?.profilePicture === nextProps.post.artistId?.profilePicture &&
     JSON.stringify(prevProps.post.commentsList) === JSON.stringify(nextProps.post.commentsList)
   );
 });

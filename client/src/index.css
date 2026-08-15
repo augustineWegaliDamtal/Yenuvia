@@ -47,7 +47,7 @@ html, body, #root {
   margin: 0;
   padding: 0;
   overflow-y: auto;
-  overscroll-behavior-y: contain; /* Kills the rubber-band bounce on iPhone/Android */
+  overscroll-behavior-y: none;
   background-color: #000;
 }
 

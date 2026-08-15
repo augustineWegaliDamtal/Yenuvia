@@ -14,19 +14,42 @@ const HeroBanner = ({ setActiveTab, liveUpdateTrigger }) => {
   useEffect(() => {
     if (!activeUser) return;
 
+    // Create an AbortController to kill the request if it takes too long
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
+
     const fetchHero = async () => {
       try {
         const cacheBuster = Date.now();
-        const res = await customFetch(`/api/matches/hero-banner?_t=${cacheBuster}`);
+        const res = await customFetch(`/api/matches/hero-banner?_t=${cacheBuster}`, {
+          signal: controller.signal
+        });
         
+        if (!res.ok) throw new Error("Banner fetch failed");
+
         const json = await res.json();
-        if (json.success) setBannerState({ type: json.type, data: json.data });
+        
+        // ✅ FIX: Properly handle both success and failure cases from the server
+        if (json.success && json.type) {
+          setBannerState({ type: json.type, data: json.data });
+        } else {
+          setBannerState({ type: "EMPTY", data: null });
+        }
       } catch (err) {
-        console.error(err);
+        // If it fails or times out, just hide the banner so the feed is clean
+        console.error("Hero Banner Error:", err.message);
         setBannerState({ type: "EMPTY", data: null });
+      } finally {
+        clearTimeout(timeoutId);
       }
     };
+
     fetchHero();
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
   }, [activeUser, liveUpdateTrigger]); 
 
   // --- 🔒 GUEST STATE: SIGN IN CTA ---
@@ -56,7 +79,12 @@ const HeroBanner = ({ setActiveTab, liveUpdateTrigger }) => {
 
   // --- ⏳ LOADING STATE ---
   if (bannerState.type === "LOADING") {
-    return <div className="flex justify-center p-4 mb-3"><Loader2 className="animate-spin text-zinc-600 size-5"/></div>;
+    // Made the loader slightly smaller and faded so it's less distracting
+    return (
+      <div className="flex justify-center items-center h-12 mb-3">
+        <Loader2 className="animate-spin text-zinc-800 size-4"/>
+      </div>
+    );
   }
   
   // --- 📭 EMPTY STATE ---
