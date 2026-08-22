@@ -5,12 +5,44 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#eab308" />
-  <link rel="apple-touch-icon" href="/icon-192x192.png" />
+    <link rel="apple-touch-icon" href="/icon-192x192.png" />
     <script src="https://js.paystack.co/v1/inline.js"></script>
     
     <title>Yenuvia</title>
+    <meta name="description" content="Yenuvia is a competitive digital art and engineering platform where artists and engineers showcase visual works and technologies, engage in school rivalries, buy or sell original creations and provide solutions to real problems in society"/>
+    
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://www.yenuvia.com/#organization",
+          "name": "Yenuvia",
+          "url": "https://www.yenuvia.com",
+          "logo": "https://www.yenuvia.com/icon-512x512.png", 
+          "description": "Yenuvia is a competitive digital art and engineering platform where artists and engineers showcase visual works and technologies, engage in school rivalries, buy or sell original creations and provide solutions to real problems in society.",
+          "sameAs": [
+            "https://www.facebook.com/yenuvia6",
+            "https://www.tiktok.com/@yenuvia6"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://www.yenuvia.com/#website",
+          "url": "https://www.yenuvia.com",
+          "name": "Yenuvia",
+          "description": "The ultimate competitive art/tech community and marketplace.",
+          "publisher": {
+            "@id": "https://www.yenuvia.com/#organization"
+          }
+        }
+      ]
+    }
+    </script>
   </head>
-  <body style="background-color: black;"> <div id="root"></div>
+  <body style="background-color: black;">
+    <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
